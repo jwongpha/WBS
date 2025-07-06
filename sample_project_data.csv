@@ -1,0 +1,13 @@
+Record Type,Task Name,ParentID,Owner,Sub Owner,Priority,Status,Situation,Start Date,End Date,Issue Type,Phase,Predecessors,Successors,TaskID,Project Name,Level,Baseline Start Date,Baseline End Date,Progress (%),Is Milestone?,DETAILS
+Task,Task 1,,Alice,,High,Not Started,On Track,2025-07-01,2025-07-05,,Phase 1,,,A001,Demo Project,1,2025-07-01,2025-07-05,0,No,Initial task setup
+Task,Design UI,A001,Anna,,High,In Progress,On Track,2025-07-06,2025-07-14,,Phase 2,A001,A003,A002,Demo Project,1,2025-07-06,2025-07-12,20,No,Design user interface
+Task,Develop Backend,A002,Bob,,Medium,On Hold,Delayed,2025-07-13,2025-07-20,,Phase 3,A002,A004,A003,Demo Project,1,2025-07-13,2025-07-20,10,No,Create API endpoints
+Task,Testing,A003,Charlie,,Medium,At Risk,On Track,2025-07-23,2025-07-31,,Phase 4,A003,A005,A004,Demo Project,1,2025-07-21,2025-07-28,0,No,Write tests
+Task,Deployment,A004,Dan,,Medium,Done,Complete,2025-07-31,2025-08-01,,Release,A004,,A005,Demo Project,1,2025-07-29,2025-08-05,100,No,Deploy application
+Issue,Issue 5,A005,Hank,,Medium,Open,Investigating,2025-07-25,2025-07-30,Performance,,A005,,I005,Demo Project,2,2025-07-25,2025-07-30,10,No,Performance issue
+Issue,Issue 4,A004,Gina,,High,At Risk,Investigating,2025-07-19,2025-07-24,Data,,A004,,I004,Demo Project,2,2025-07-19,2025-07-24,10,No,Data corruption
+Issue,Issue 3,A003,Frank,,Low,In Progress,Investigating,2025-07-14,2025-07-18,UI,,A003,,I003,Demo Project,2,2025-07-14,2025-07-18,50,No,UI glitch
+Issue,Issue 2,A002,Eve,,Medium,Resolved,Closed,2025-07-08,2025-07-13,Bug,,A002,,I002,Demo Project,2,2025-07-08,2025-07-13,100,No,Security fix
+Issue,Issue 1,A001,Bob,,Medium,Open,Investigating,2025-07-02,2025-07-07,Bug,,A001,,I001,Demo Project,2,2025-07-02,2025-07-07,10,No,Investigate bug
+Vehicle,Go live,A001,,,Medium,,Sunny,2025-07-19,2025-07-19,,,,,V1,Demo Project,2,2025-07-19,2025-07-19,,Yes,
+Vehicle,Go live (2),A001,,,Medium,,Sunny,2025-07-26,2025-07-26,,,,,V2,Demo Project,2,2025-07-19,2025-07-19,,Yes,

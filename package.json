@@ -1,0 +1,19 @@
+{
+  "name": "projectdashboard",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0",
+    "papaparse": "^5.5.3"
+  }
+}

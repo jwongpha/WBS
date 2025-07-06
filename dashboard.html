@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Dashboard</title>
+    
+    <!-- Import Google Fonts (Roboto) and Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    
+    <!-- Import External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="vendor/frappe-gantt/dist/frappe-gantt.css">
+    <script src="vendor/frappe-gantt/dist/frappe-gantt.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <!-- Add Chart.js Annotation Plugin for the current day line -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+    <!-- Add Chart.js Zoom Plugin for panning and zooming -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+    <!-- Add Chart.js Datalabels Plugin for showing labels on charts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <!-- jsPDF library for exporting PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <button id="drawerToggle"><span class="material-icons">menu</span></button>
+
+    <nav id="navigation-drawer" aria-label="Dashboard navigation">
+        <h2 class="sr-only">Dashboard Navigation</h2>
+        <ul class="control-section">
+            <li>
+            <details class="menu" open>
+                <summary class="menu-summary"><span class="material-icons menu-summary-icon">folder</span>File &amp; Data</summary>
+                <div class="file-inputs-container">
+                    <div class="action-group">
+                        <div class="file-input-wrapper">
+                            <label for="taskFile" class="file-label"><span class="material-icons">upload_file</span>Import Project Data</label>
+                            <input type="file" id="taskFile" accept=".csv">
+                            <span id="taskFileName" class="file-name"></span>
+                        </div>
+                        <input type="file" id="commentsCsvFile" accept=".csv" class="hidden">
+                        <button id="importCommentsBtn" class="action-btn btn-secondary"><span class="material-icons">file_upload</span>Import Comments</button>
+                    </div>
+                    <hr class="menu-separator" />
+                    <div class="action-group">
+                        <button id="exportCsvButton" class="action-btn"><span class="material-icons">download</span>Export Data as CSV</button>
+                        <button id="exportPdfButton" class="action-btn btn-secondary"><span class="material-icons">picture_as_pdf</span>Export Data as PDF</button>
+                        <button id="exportCommentsBtn" class="action-btn btn-secondary"><span class="material-icons">file_download</span>Export Comments</button>
+                    </div>
+                </div>
+            </details>
+            </li>
+            <li>
+            <details class="menu">
+                <summary class="menu-summary"><span class="material-icons menu-summary-icon">edit</span>Item Management</summary>
+                <div class="actions-container">
+                    <div class="action-group">
+                        <button id="addNewItemBtn" class="action-btn btn-primary"><span class="material-icons">add_circle</span>Add New Item</button>
+                    </div>
+                    <hr class="menu-separator" />
+                    <div id="selectedActionsGroup" class="action-group hidden">
+                        <h3>Selected Item Actions</h3>
+                        <button id="deleteSelectedBtn" class="action-btn btn-danger hidden"><span class="material-icons">delete</span>Delete Selected Items</button>
+                        <button id="duplicateSelectedBtn" class="action-btn btn-secondary"><span class="material-icons">content_copy</span>Duplicate Selected Items</button>
+                    </div>
+                </div>
+            </details>
+            </li>
+            <li>
+            <details class="menu">
+                <summary class="menu-summary"><span class="material-icons menu-summary-icon">filter_list</span>View &amp; Filters</summary>
+                <div class="actions-container">
+                    <div class="action-group">
+                        <button id="switchKanbanBtn" class="action-btn">Switch View (Kanban/Table)</button>
+                        <label class="baseline-toggle"><input type="checkbox" id="baselineToggle" checked> Show Baselines</label>
+                    </div>
+                    <hr class="menu-separator" />
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label for="projectFilter">Project Name</label>
+                            <select id="projectFilter" multiple></select>
+
+                            <label for="ownerFilter">Owner</label>
+                            <select id="ownerFilter" multiple></select>
+
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter" multiple></select>
+
+                            <label for="situationFilter">Situation</label>
+                            <select id="situationFilter" multiple></select>
+
+                            <label for="typeFilter">Record Type</label>
+                            <select id="typeFilter" multiple></select>
+
+                            <label for="issueTypeFilter">Issue Type</label>
+                            <select id="issueTypeFilter" multiple></select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="startDateFilter">Start Date</label>
+                            <input type="date" id="startDateFilter">
+
+                            <label for="endDateFilter">End Date</label>
+                            <input type="date" id="endDateFilter">
+                        </div>
+                        <div class="filter-buttons">
+                            <button id="filterButton" class="filter-btn">Apply Filters</button>
+                            <button id="clearFiltersButton" class="filter-btn">Clear Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+            </li>
+            <li>
+            <details class="menu">
+                <summary class="menu-summary"><span class="material-icons menu-summary-icon">settings</span>Project Settings</summary>
+                <div class="actions-container">
+                    <div class="action-group">
+                        <button id="editProjectInfoBtn" class="action-btn"><span class="material-icons">edit</span>Edit Project Info</button>
+                        <button id="removeDuplicatesBtn" class="action-btn"><span class="material-icons">delete_sweep</span>Remove Duplicates</button>
+                    </div>
+                    <hr class="menu-separator" />
+                    <div class="action-group">
+                        <button id="resetButton" class="action-btn">Reset All Data</button>
+                        <button id="deleteAllBtn" class="action-btn btn-danger"><span class="material-icons">delete_forever</span>Delete All Data</button>
+                    </div>
+                    <hr class="menu-separator" />
+                    <div class="action-group">
+                        <button id="themeToggle" class="action-btn btn-secondary"><span class="material-icons">dark_mode</span>Toggle Theme</button>
+                    </div>
+                </div>
+            </details>
+            </li>
+        </ul>
+        
+    </nav>
+
+    <div id="main-container">
+        <header>
+            <div class="header-title">
+                <h1 id="projectNameDisplay">Project Management Dashboard</h1>
+                <button id="headerEditProjectInfoBtn" class="header-edit-btn" title="Edit Project Info">
+                    <span class="material-icons">edit</span>
+                </button>
+            </div>
+            <p id="projectDescriptionDisplay">An overview of the project status</p>
+        </header>
+        
+        <main id="dashboard">
+            <!-- KPI Section with Focus Mode -->
+            <div id="kpiCard" class="card">
+                <div class="card-header">
+                    <h3>Key Performance Indicators</h3>
+                    <div class="zoom-controls">
+                        <button id="toggleKpiCardBtn" class="zoom-btn" title="Close KPI Section" aria-expanded="true" aria-controls="kpiCard"><span class="material-icons">close</span></button>
+                        <button id="openKpiModalBtn" class="zoom-btn" title="Focus Mode"><span class="material-icons">fullscreen</span></button>
+                    </div>
+                </div>
+                <div id="kpi-container">
+                    <h4 class="kpi-group-heading">Overall Health</h4>
+                    <!-- KPI Card 1: Overall Progress -->
+                    <div class="kpi-card-new" data-kpi="overall-progress">
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Overall Progress</h3>
+                            <p id="kpi-progress-value" class="kpi-value">0%</p>
+                        </div>
+                        <div class="kpi-chart-container">
+                            <canvas id="progressDonutChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- KPI Card 4: Upcoming Milestone -->
+                    <div class="kpi-card-new-vertical" data-kpi="upcoming-milestone">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span class="material-icons kpi-icon-large text-amber-500">flag</span>
+                            <div>
+                                <h3 class="kpi-title">Upcoming Milestone</h3>
+                                <p id="milestoneDaysLeft" class="kpi-value">-</p>
+                            </div>
+                        </div>
+                        <div class="kpi-details">
+                             <p id="nextMilestoneName" style="font-size: 0.9em; color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="No data available">No data available</p>
+                             <p id="nextMilestoneDate" style="font-size: 0.85em; color: var(--text-secondary);">-</p>
+                        </div>
+                    </div>
+
+                    <!-- KPI Card 3: At-Risk Items -->
+                    <div class="kpi-card-new-vertical" data-kpi="at-risk">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span class="material-icons kpi-icon-large text-red-500">warning</span>
+                            <div>
+                                <h3 class="kpi-title">At-Risk Items</h3>
+                                <p id="atRiskCount" class="kpi-value">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-details">
+                            <div id="overdueTasksKpi" class="kpi-detail-item-new">
+                                <span>Overdue Tasks</span><span class="font-bold">0</span>
+                            </div>
+                            <div id="highPriorityIssuesKpi" class="kpi-detail-item-new">
+                                <span>High Priority Issues</span><span class="font-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="kpi-group-heading">Workload Breakdown</h4>
+
+                    <!-- KPI Card 2: Task Status -->
+                    <div class="kpi-card-new" data-kpi="task-status">
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Task Status</h3>
+                            <p id="kpi-total-tasks" class="kpi-value">0 Tasks</p>
+                        </div>
+                        <div class="kpi-chart-container">
+                            <canvas id="statusDonutChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- NEW KPI Card 6: Total Issues -->
+                    <div class="kpi-card-new-vertical" data-kpi="total-issues">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span class="material-icons kpi-icon-large text-blue-500">bug_report</span>
+                            <div>
+                                <h3 class="kpi-title">Total Issues</h3>
+                                <p id="totalIssuesCount" class="kpi-value">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-details">
+                            <div id="openIssuesKpi" class="kpi-detail-item-new">
+                                <span>Open Issues</span><span class="font-bold">0</span>
+                            </div>
+                            <div id="resolvedIssuesKpi" class="kpi-detail-item-new">
+                                <span>Resolved Issues</span><span class="font-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW KPI Card 5: Tasks by Priority -->
+                    <div class="kpi-card-new" data-kpi="tasks-by-priority">
+                        <div class="kpi-content">
+                            <h3 class="kpi-title">Tasks by Priority</h3>
+                            <p id="kpi-total-priority-tasks" class="kpi-value">0 Tasks</p>
+                        </div>
+                        <div class="kpi-chart-container">
+                            <canvas id="priorityDonutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                 <div class="card-header gantt-header">
+                    <h3>Project Timeline (Gantt Chart)</h3>
+                    <div class="zoom-controls gantt-controls">
+                        <button id="ganttScrollLeft" class="zoom-btn" title="Scroll Left"><span class="material-icons">arrow_back</span></button>
+                        <button id="ganttScrollRight" class="zoom-btn" title="Scroll Right"><span class="material-icons">arrow_forward</span></button>
+
+                        <button id="ganttScrollUp" class="zoom-btn" title="Scroll Up"><span class="material-icons">arrow_upward</span></button>
+                        <button id="ganttScrollDown" class="zoom-btn" title="Scroll Down"><span class="material-icons">arrow_downward</span></button>
+                        <button id="ganttFirstTaskBtn" class="zoom-btn" title="Go to First Task"><span class="material-icons">first_page</span></button>
+
+                        <span class="gantt-control-divider"></span> <button id="toggleGanttCardBtn" class="zoom-btn" title="Hide/Show"><span class="material-icons">expand_less</span></button>
+                        <button id="ganttZoomOut" class="zoom-btn"><span class="material-icons">zoom_out</span></button>
+                        <button id="ganttZoomIn" class="zoom-btn"><span class="material-icons">zoom_in</span></button>
+                        <select id="ganttViewModeSelect" class="gantt-view-select" title="Change view mode">
+                            <option value="Month">Month</option>
+                            <option value="Week">Week</option>
+                            <option value="Day">Day</option>
+                            <option value="Half Day">Half Day</option>
+                            <option value="Quarter Day">Quarter Day</option>
+                        </select>
+                        <button id="toggleBaselineBtn" class="zoom-btn" title="Hide Baselines"><span class="material-icons">visibility_off</span></button>
+                        <button id="toggleGanttEditBtn" class="zoom-btn" title="Enable Edit Mode"><span class="material-icons">pan_tool</span></button>
+                        <button id="openGanttModalBtn" class="zoom-btn" title="Focus Mode"><span class="material-icons">fullscreen</span></button>
+                    </div>
+                </div>
+                 <div class="gantt-container">
+                    <div id="ganttChart"></div>
+                </div>
+                <div class="legend-container" id="ganttLegend">
+                    <div class="legend-group">
+                        <span class="legend-title">Tasks</span>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-not-started);"></span> Not Started</div>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-in-progress);"></span> In Progress</div>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-on-hold);"></span> On Hold</div>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--danger-color);"></span> Overdue/At Risk</div>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-done);"></span> Completed</div>
+                    </div>
+                    <div class="legend-group">
+                        <span class="legend-title">Issues</span>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-open);"></span> Open</div>
+                        <div class="legend-item"><span class="legend-color-box" style="background-color: var(--status-resolved);"></span> Resolved</div>
+                    </div>
+                    <div class="legend-group">
+                        <span class="legend-title">Milestones</span>
+                        <div class="legend-item"><span class="legend-line-box"></span> Baseline</div>
+                        <div class="legend-item"><span style="color: #ffd794; font-size: 20px; line-height: 1; vertical-align: middle;">◆</span> Milestone</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tableCard" class="card table-container">
+                <div class="card-header">
+                    <h3>Work Breakdown Structure</h3>
+                    <div class="type-switch">
+                        <label><input type="checkbox" name="typeSwitch" value="all" checked> All</label>
+                        <label><input type="checkbox" name="typeSwitch" value="Task"> Task</label>
+                        <label><input type="checkbox" name="typeSwitch" value="Issue"> Issue</label>
+                        <label><input type="checkbox" name="typeSwitch" value="Vehicle Milestone"> Milestone</label>
+                    </div>
+                    <div class="zoom-controls">
+                        <button id="toggleTableCardBtn" class="zoom-btn" title="Hide/Show"><span class="material-icons">expand_less</span></button>
+                        <button id="addNewItemTableBtn" class="zoom-btn" title="Add New Item"><span class="material-icons">add_circle</span></button>
+                        <button id="tableZoomOut" class="zoom-btn"><span class="material-icons">zoom_out</span></button>
+                        <button id="tableZoomIn" class="zoom-btn"><span class="material-icons">zoom_in</span></button>
+                        <input type="color" id="tableTextColorPicker" class="table-color-picker" title="Pick a text color then click the check icon to apply">
+                        <button id="applyTextColorBtn" class="zoom-btn" title="Apply selected color"><span class="material-icons">check</span></button>
+                        <button id="openTableModalBtn" class="zoom-btn" title="Focus Mode"><span class="material-icons">fullscreen</span></button>
+                    </div>
+                    <div class="column-visibility-control">
+                        <button id="toggleColumnsBtn" class="zoom-btn" title="Toggle Columns"><span class="material-icons">view_column</span></button>
+                        <div id="columnDropdown" class="column-dropdown">
+                            <!-- Checkboxes for columns will be inserted here by JS -->
+                        </div>
+                    </div>
+                    <input type="text" id="tableSearchInput" class="table-search" placeholder="Search...">
+                    <div id="tableActionIcons" class="table-action-icons hidden">
+                        <span id="tableEditIcon" class="material-icons">edit</span>
+                        <span id="tableCopyIcon" class="material-icons">content_copy</span>
+                        <span id="tableDeleteIcon" class="material-icons">delete</span>
+                    </div>
+                </div>
+                <table id="taskMatrixTable">
+                    <thead>
+                        <tr>
+                            <th data-field-name="TaskID" draggable="true">TaskID</th>
+                            <th data-field-name="Type Icon" draggable="true">Type</th>
+                            <th data-field-name="Task Name" draggable="true">Task Name</th>
+                            <th data-field-name="Owner" draggable="true">Owner</th>
+                            <th data-field-name="Sub Owner" draggable="true">Sub Owner</th>
+                            <th data-field-name="Priority" draggable="true">Priority</th>
+                            <th data-field-name="Baseline Start Date" draggable="true">Baseline Start</th>
+                            <th data-field-name="Start Date" draggable="true">Start Date</th>
+                            <th data-field-name="End Date" draggable="true">End Date</th>
+                            <th data-field-name="Overdue" draggable="true">Overdue?</th>
+                            <th data-field-name="Baseline End Date" draggable="true">Baseline End</th>
+                            <th class="progress-cell" data-field-name="Progress (%)" draggable="true">Progress</th>
+                            <th data-field-name="Status" draggable="true">Status</th>
+                            <th data-field-name="Situation" draggable="true">Situation</th>
+                            <th data-field-name="Is Milestone?" draggable="true">Milestone?</th>
+                            <th data-field-name="Progress Detail" draggable="true">DETAILS</th>
+                            <th data-field-name="Actions" draggable="true">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="kanbanContainer" class="card kanban-container hidden">
+                <div class="card-header">
+                    <h3>Kanban Board</h3>
+                    <select id="kanbanTypeSelect" class="kanban-type-select">
+                        <option value="Task">Task</option>
+                        <option value="Issue">Issue</option>
+                    </select>
+                    <div class="zoom-controls">
+                        <button id="toggleKanbanCardBtn" class="zoom-btn" title="Hide/Show"><span class="material-icons">expand_less</span></button>
+                        <button id="openKanbanModalBtn" class="zoom-btn" title="Focus Mode"><span class="material-icons">fullscreen</span></button>
+                    </div>
+                </div>
+                <div id="kanbanBoard"></div>
+            </div>
+        </main>
+    </div>
+    <input type="color" id="cellTextColorPicker" class="table-color-picker cell-color-picker" title="Pick a text color then click the check icon to apply">
+    <button id="applyCellTextColorBtn" class="zoom-btn cell-color-apply-btn" title="Apply selected color"><span class="material-icons">check</span></button>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Item</h2>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="addItemForm">
+                <div class="form-field">
+                    <label for="itemType">Record Type</label>
+                    <select id="itemType" name="Record Type" required>
+                        <option value="Task">Task</option>
+                        <option value="Issue">Issue</option>
+                        <option value="Vehicle">Vehicle Milestone</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="itemName">Name</label>
+                    <input type="text" id="itemName" name="Task Name" required>
+                </div>
+                 <div class="form-field">
+                    <label for="itemParent">Parent Task/Project</label>
+                    <input type="text" id="parentFilter" class="modal-filter-input" placeholder="Filter tasks">
+                    <select id="itemParent" name="ParentID"></select>
+                </div>
+                 <div class="form-row">
+                    <div class="form-field">
+                        <label for="itemOwner">Owner</label>
+                        <input type="text" id="itemOwner" name="Owner">
+                    </div>
+                    <div class="form-field">
+                        <label for="itemSubOwner">Sub Owner</label>
+                        <input type="text" id="itemSubOwner" name="Sub Owner">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="itemPriority">Priority</label>
+                        <select id="itemPriority" name="Priority">
+                            <option value="High">High</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="itemStatus">Status</label>
+                        <select id="itemStatus" name="Status">
+                             <option value="Not Started">Not Started</option>
+                             <option value="In Progress">In Progress</option>
+                             <option value="On Hold">On Hold</option>
+                             <option value="At Risk">At Risk</option>
+                             <option value="Done">Done</option>
+                             <option value="Open">Open</option>
+                             <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <div class="form-field" id="itemSituationField"> <!-- Added ID for easier targeting -->
+                        <label for="itemSituation">Situation</label>
+                        <select id="itemSituation" name="Situation">
+                            <option value="Sunny" selected>Sunny</option>
+                            <option value="Cloudy">Cloudy</option>
+                            <option value="Thunderstorm">Thunderstorm</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="itemStartDate">Start Date</label>
+                        <input type="date" id="itemStartDate" name="Start Date">
+                    </div>
+                    <div>
+                        <label for="itemEndDate">End Date</label>
+                        <input type="date" id="itemEndDate" name="End Date">
+                    </div>
+                </div>
+                <div id="issueTypeField" class="form-field hidden">
+                    <label for="itemIssueType">Issue Type</label>
+                    <input type="text" id="itemIssueType" name="Issue Type">
+                </div>
+                <div id="phaseField" class="form-field hidden">
+                    <label for="itemPhase">Phase</label>
+                    <input type="text" id="itemPhase" name="Phase">
+                </div>
+                <div class="form-field">
+                    <label for="predecessorSelect">Predecessors</label>
+                    <input type="text" id="predecessorFilter" class="modal-filter-input" placeholder="Filter tasks">
+                    <select id="predecessorSelect" name="Predecessors" multiple></select>
+                </div>
+                <div class="form-field">
+                    <label for="successorSelect">Successors</label>
+                    <input type="text" id="successorFilter" class="modal-filter-input" placeholder="Filter tasks">
+                    <select id="successorSelect" name="Successors" multiple></select>
+                </div>
+                <div class="filter-buttons" style="margin-top: 20px;">
+                    <button type="button" id="saveCloseBtn" class="filter-btn">Save &amp; Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmation</h2>
+                <button class="modal-close" id="confirmCloseBtn">&times;</button>
+            </div>
+            <p id="confirmMessage"></p>
+            <div class="filter-buttons" style="margin-top: 20px;">
+                <button id="confirmYesBtn" class="filter-btn">Yes</button>
+                <button id="confirmNoBtn" class="reset-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div id="commentsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Comments</h2>
+                <button class="modal-close" id="closeCommentsBtn">&times;</button>
+            </div>
+            <div id="commentsList" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <textarea id="newCommentText" placeholder="Add a comment" style="width: 100%; height: 80px;"></textarea>
+            <input type="text" id="newCommentAuthor" placeholder="Your name" style="width: 100%; margin-top: 5px;" />
+            <div class="filter-buttons" style="margin-top: 10px;">
+                <button id="addCommentBtn" class="filter-btn">Add Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Info Modal -->
+    <div id="projectInfoModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Project Info</h2>
+                <button class="modal-close" id="closeProjectInfoBtn">&times;</button>
+            </div>
+            <div class="form-field">
+                <label for="projectNameInput">Project Name</label>
+                <input type="text" id="projectNameInput">
+            </div>
+            <div class="form-field">
+                <label for="projectDescriptionInput">Description</label>
+                <input type="text" id="projectDescriptionInput">
+            </div>
+            <div class="filter-buttons" style="margin-top: 20px;">
+                <button id="saveProjectInfoBtn" class="filter-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Notification Modal -->
+    <div id="customAlertDialog" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="customAlertTitle">Notification</h2>
+                <button class="modal-close" id="customAlertCloseBtn">&times;</button>
+            </div>
+            <div id="customAlertMessage"></div>
+            <div class="filter-buttons" style="margin-top: 20px;">
+                <button id="customAlertOkBtn" class="filter-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Focus Modal -->
+    <div id="kpiModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>KPI Focus</h2>
+                <button class="modal-close" id="closeKpiModalBtn">&times;</button>
+            </div>
+            <div id="kpiModalContainer"></div>
+        </div>
+    </div>
+
+    <!-- Gantt Focus Modal -->
+    <div id="ganttModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="gantt-modal-header-left">
+                    <h2>Gantt Chart Focus</h2>
+                    <select id="ganttViewModeModalSelect" class="gantt-view-select" title="Change view mode">
+                        <option value="Month">Month</option>
+                        <option value="Week">Week</option>
+                        <option value="Day">Day</option>
+                        <option value="Half Day">Half Day</option>
+                        <option value="Quarter Day">Quarter Day</option>
+                    </select>
+                    <button id="toggleGanttModalEditBtn" class="zoom-btn" title="Enable Edit Mode"><span class="material-icons">pan_tool</span></button>
+                </div>
+                <button class="modal-close" id="closeGanttModalBtn">&times;</button>
+            </div>
+            <div class="gantt-container">
+                <div id="ganttChartModal"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Focus Modal -->
+    <div id="tableModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Table Focus</h2>
+                <button class="modal-close" id="closeTableModalBtn">&times;</button>
+            </div>
+            <div id="tableModalContainer"></div>
+        </div>
+    </div>
+
+    <!-- Kanban Focus Modal -->
+    <div id="kanbanModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Kanban Focus</h2>
+                <button class="modal-close" id="closeKanbanModalBtn">&times;</button>
+            </div>
+            <div id="kanbanModalContainer"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

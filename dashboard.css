@@ -1,0 +1,1386 @@
+        /* --- Gemini Inspired Theme --- */
+        :root {
+            --primary-color: #4285F4; /* Gemini Blue */
+            --primary-dark: #1A73E8;
+            --danger-color: #D93025;
+            --danger-dark: #A50E0E;
+            --secondary-color: #E8F0FE; /* Light Blue background */
+            --secondary-dark: #D2E3FC;
+            --background-color: #F8F9FA; /* Off-white */
+            --card-background: #FFFFFF;
+            --text-primary: #202124; /* Dark Grey */
+            --text-secondary: #5F6368; /* Medium Grey */
+            --table-text-color: var(--text-primary);
+            --divider-color: #DADCE0;
+            --drawer-width: 20rem;
+            --drawer-rail-width: 5rem;
+            --drawer-background: linear-gradient(180deg, #FFFFFF 0%, #E8F0FE 100%);
+            --scrollbar-thumb-color: #C8C8C8;
+
+            /* Status Colors - Gemini Palette */
+            --status-done: #34A853; /* Green */
+            --status-in-progress: #4285F4; /* Blue */
+            --status-on-hold: #FBBC04; /* Yellow/Amber */
+            --status-at-risk: #EA4335; /* Red */
+            --status-resolved: #009688; /* Teal */
+            --status-open: #9C27B0; /* Purple */
+            --status-not-started: #BDC1C6; /* Grey */
+            --dependency-arrow-color: #888888;
+
+            /* Priority Colors */
+            --priority-high: #EA4335;
+            --priority-medium: #4285F4;
+            --priority-low: #34A853;
+
+            /* Situation Colors - Using Gemini's accent colors */
+            --situation-sunny: #FBBC04; /* Yellow */
+            --situation-cloudy: #8AB4F8; /* Lighter Blue */
+            --situation-thunderstorm: #C58AF9; /* Purple */
+
+            /* Button Text */
+            --button-primary-text: #FFFFFF;
+            --button-secondary-text: #1A73E8;
+        }
+
+        body.dark-mode {
+            --primary-color: #89B4F8; /* Lighter Blue for Dark Mode */
+            --primary-dark: #AECBFA;
+            --danger-color: #F28B82;
+            --danger-dark: #EE675C;
+            --secondary-color: #282A2E; /* Dark Grey */
+            --secondary-dark: #3C4043;
+            --background-color: #1B1B1F; /* Very Dark Blue/Grey */
+            --card-background: #202124;
+            --text-primary: #E8EAED; /* Light Grey */
+            --text-secondary: #9AA0A6; /* Muted Grey */
+            --table-text-color: var(--text-primary);
+            --divider-color: #3C4043;
+            --drawer-background: linear-gradient(180deg, #202124 0%, #282A2E 100%);
+            --scrollbar-thumb-color: #5F6368;
+
+            /* Status Colors - Brighter for Dark Mode */
+            --status-done: #81C995; /* Lighter Green */
+            --status-in-progress: #89B4F8; /* Lighter Blue */
+            --status-on-hold: #FDD663; /* Lighter Yellow */
+            --status-at-risk: #F28B82; /* Lighter Red */
+            --status-resolved: #26A69A; /* Light Teal */
+            --status-open: #BA68C8; /* Light Purple */
+            --status-not-started: #9AA0A6;
+
+            /* Priority Colors */
+            --priority-high: var(--status-at-risk);
+            --priority-medium: var(--status-in-progress);
+            --priority-low: var(--status-done);
+
+            /* Situation Colors */
+            --situation-sunny: #FDD663;
+            --situation-cloudy: #AECBFA;
+            --situation-thunderstorm: #D7AEFB;
+
+            /* Button Text */
+            --button-primary-text: #202124; /* Dark text on light buttons */
+            --button-secondary-text: #E8EAED;
+            --dependency-arrow-color: #bbbbbb;
+            --drawer-rail-width: 5rem;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden; /* prevent horizontal scrolling on the page */
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        #navigation-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--drawer-width);
+            height: 100vh;
+            background: var(--drawer-background);
+            box-shadow: 4px 0px 15px rgba(0,0,0,0.1);
+            border-right: 1px solid var(--divider-color);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 1001;
+            transform: translateX(0);
+            transition: width 0.3s ease-in-out;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #main-container {
+            margin-left: var(--drawer-width);
+            padding: 1.5rem;
+            transition: margin-left 0.3s ease-in-out;
+        }
+        
+        #drawerToggle {
+            position: fixed;
+            top: 1.25rem;
+            left: calc(var(--drawer-width) + 1.25rem);
+            z-index: 1002;
+            background-color: var(--card-background);
+            border: 1px solid var(--divider-color);
+            border-radius: 50%;
+            width: 3rem;
+            height: 3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.3s ease-in-out, transform 0.3s ease;
+        }
+
+        
+        
+        #navigation-drawer.collapsed {
+            width: var(--drawer-rail-width);
+        }
+        #main-container.collapsed {
+            margin-left: var(--drawer-rail-width);
+        }
+        #drawerToggle.collapsed {
+            left: calc(var(--drawer-rail-width) + 1.25rem);
+            transform: rotate(180deg);
+        }
+
+        #navigation-drawer.collapsed details.menu > *:not(summary) {
+            display: none;
+        }
+
+        #navigation-drawer.collapsed .menu-summary,
+        #navigation-drawer.collapsed .file-label,
+        #navigation-drawer.collapsed .filter-btn,
+        #navigation-drawer.collapsed .action-btn,
+        #navigation-drawer.collapsed .reset-btn {
+            font-size: 0;
+            gap: 0;
+            justify-content: center;
+        }
+
+        #navigation-drawer.collapsed .menu-summary-icon,
+        #navigation-drawer.collapsed .file-label .material-icons,
+        #navigation-drawer.collapsed .filter-btn .material-icons,
+        #navigation-drawer.collapsed .action-btn .material-icons,
+        #navigation-drawer.collapsed .reset-btn .material-icons {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        #navigation-drawer.collapsed .menu-summary {
+            justify-content: center;
+        }
+
+header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header-edit-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .header-edit-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        header h1 {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 2.5em;
+        }
+        
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        .control-section {
+            list-style: none;
+            margin: 0;
+            padding: 1.5rem;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+.control-section > li {
+    list-style: none;
+    width: 100%;
+}
+
+        .control-section h3 {
+             margin: 0;
+             font-weight: 500;
+             color: var(--text-secondary);
+             text-align: center;
+             width: 100%;
+        }
+
+.file-inputs-container, .filter-controls, .actions-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 1.25rem;
+     width: 100%;
+}
+
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 0.625rem;
+        }
+
+        .action-group + .action-group {
+            margin-top: 0.625rem;
+            border-top: 1px solid var(--divider-color);
+            padding-top: 0.625rem;
+        }
+
+        .menu-separator {
+            width: 100%;
+            border: none;
+            border-top: 1px solid var(--divider-color);
+            margin: 0.625rem 0;
+        }
+        
+.file-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+        
+        .filter-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9375rem;
+        }
+
+        .filter-controls label, #addItemForm label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .filter-controls input[type="date"], .filter-controls select,
+        #addItemForm input, #addItemForm select, #addItemForm textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--divider-color);
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            box-sizing: border-box;
+        }
+        .modal-filter-input {
+            margin-bottom: 0.25rem;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.625rem;
+            width: 100%;
+            margin-top: 0.625rem;
+        }
+        
+        .file-label, .filter-btn, .action-btn, .reset-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-label, .filter-btn, .action-btn {
+            flex-grow: 1;
+            color: var(--button-primary-text);
+            background-color: var(--primary-color);
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover, .btn-primary:active { background-color: var(--primary-dark); }
+
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover, .btn-danger:active { background-color: var(--danger-dark); }
+
+        .btn-secondary { background-color: var(--secondary-color); color: var(--button-secondary-text); }
+        .btn-secondary:hover, .btn-secondary:active { background-color: var(--secondary-dark); }
+
+        .reset-btn {
+            background-color: #f1f1f1;
+            color: var(--button-secondary-text);
+            flex-grow: 1;
+        }
+        .reset-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .zoom-btn {
+            background: none;
+            border: 1px solid var(--divider-color);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            color: var(--text-secondary);
+        }
+        .zoom-btn .material-icons {
+            pointer-events: none;
+        }
+        .gantt-view-select {
+            border: 1px solid var(--divider-color);
+            background: none;
+            height: 36px;
+            color: var(--text-secondary);
+            border-radius: 4px;
+        }
+        .gantt-modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .table-color-picker {
+            background: none;
+            border: 1px solid var(--divider-color);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            cursor: pointer;
+        }
+        .table-color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+        .table-color-picker::-moz-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+        .cell-color-picker {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+        }
+        .cell-color-apply-btn {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+        }
+        .zoom-btn:hover {
+            background-color: #f1f1f1;
+        }
+
+        .file-label:focus, .filter-btn:focus, .action-btn:focus, .reset-btn:focus, .zoom-btn:focus {
+            outline: 2px solid var(--primary-dark);
+            outline-offset: 2px;
+        }
+        .btn-danger:focus {
+            outline-color: var(--danger-dark);
+        }
+        .btn-secondary:focus {
+            outline-color: var(--secondary-dark);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+        
+        .file-name {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            min-height: 1.2em;
+        }
+
+        #dashboard {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        /* --- NEW KPI Card Styles --- */
+        #kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .kpi-group-heading {
+            grid-column: 1 / -1;
+            margin: 8px 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .kpi-card-new, .kpi-card-new-vertical {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            cursor: pointer;
+        }
+
+        .kpi-card-new {
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-card-new:hover, .kpi-card-new-vertical:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .kpi-card-new-vertical {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .kpi-content {
+            flex-grow: 1;
+        }
+
+        .kpi-title {
+            color: var(--text-secondary);
+            font-size: 1em;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+        }
+
+        .kpi-value {
+            color: var(--text-primary);
+            font-size: 2.2em;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .kpi-chart-container {
+            width: 5.625rem;
+            height: 5.625rem;
+            flex-shrink: 0;
+        }
+
+        .kpi-icon-large {
+            font-size: 2.5rem;
+            padding: 0.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kpi-icon-large.text-red-500 { color: var(--status-at-risk); background-color: rgba(217, 4, 41, 0.1); }
+        .kpi-icon-large.text-amber-500 { color: var(--status-on-hold); background-color: rgba(255, 193, 7, 0.1); }
+        .kpi-icon-large.text-blue-500 { color: var(--status-in-progress); background-color: rgba(0, 91, 154, 0.1); }
+
+
+        .kpi-details {
+            width: 100%;
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .kpi-detail-item-new {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            padding-top: 8px;
+            border-top: 1px solid var(--divider-color);
+            color: var(--text-secondary);
+        }
+        .kpi-detail-item-new span:last-child {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+.card {
+             background-color: var(--card-background);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Collapse/Expand support for dashboard cards */
+        .card.collapsed {
+            padding-bottom: 0;
+        }
+        .card.collapsed > :not(.card-header) {
+            display: none;
+        }
+
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 1001; /* ensure header controls stay above chart overlays */
+}
+
+.kanban-type-select {
+    margin-left: auto;
+}
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.25em;
+            font-weight: 500;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Ensure Gantt controls sit next to the heading on the left */
+        .gantt-header {
+            justify-content: flex-start;
+        }
+
+        .gantt-controls {
+            margin-left: 0;
+        }
+
+        .column-visibility-control {
+            position: relative;
+            display: inline-block;
+        }
+
+        .type-switch {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .type-switch label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-primary);
+        }
+
+        .baseline-toggle {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9em;
+            color: var(--text-primary);
+        }
+
+        .column-dropdown {
+            position: absolute;
+            top: 45px; /* Adjust based on button height */
+            right: 0;
+            background-color: var(--card-background);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 10px 15px;
+            z-index: 1000;
+            min-width: 180px;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .table-action-icons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .column-dropdown.show {
+            display: flex;
+        }
+
+        .table-search {
+            margin-left: auto;
+            padding: 6px 8px;
+            border: 1px solid var(--divider-color);
+            border-radius: 4px;
+        }
+
+        .column-dropdown label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: var(--text-primary);
+        }
+
+        .column-dropdown label input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.1);
+        }
+
+        /* Class for hidden columns */
+        .hidden-column {
+            display: none !important;
+        }
+
+        /* Generic hidden class for toggling visibility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Styles for draggable columns */
+        th[draggable="true"] {
+            cursor: grab;
+        }
+
+        th.dragging {
+            opacity: 0.5;
+        }
+
+        th.drag-over-left {
+            border-left: 2px solid var(--primary-color);
+        }
+
+        th.drag-over-right {
+            border-right: 2px solid var(--primary-color);
+        }
+        
+        .gantt-container {
+            height: 500px;
+            width: 100%;
+            border: 1px solid var(--divider-color);
+            overflow-x: auto; /* enable horizontal scrolling */
+            overflow-y: auto; /* allow vertical scrolling for long charts */
+            cursor: grab; /* indicate chart can be dragged */
+        }
+
+        /* Disable pointer events on task bars unless in edit mode */
+
+        .gantt-container:not(.edit-mode) .bar-wrapper,
+        .gantt-container:not(.edit-mode) .bar,
+        .gantt-container:not(.edit-mode) .handle {
+            pointer-events: none;
+        }
+
+        /* When editing, allow dragging tasks but still pan by clicking empty space */
+        .gantt-container.edit-mode .bar-wrapper {
+            pointer-events: auto;
+        }
+        .gantt-container.edit-mode .bar,
+        .gantt-container.edit-mode .handle {
+            pointer-events: auto;
+        }
+
+        .gantt-container.edit-mode {
+            cursor: grab;
+        }
+
+        .gantt-container.panning {
+            cursor: grabbing; /* cursor when actively dragging */
+        }
+
+        #ganttChart, #ganttChartModal {
+            display: inline-block;
+            min-width: 100%;
+        }
+
+        .legend-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            justify-content: flex-start;
+            margin-top: 0.9375rem;
+            padding-top: 0.9375rem;
+            border-top: 1px solid var(--divider-color);
+        }
+
+        .legend-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-right: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .legend-color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .legend-line-box {
+            width: 20px;
+            height: 0;
+            border-top: 2px dashed #888;
+            display: inline-block;
+        }
+
+        /* Gantt bar colors based on task status */
+        .gantt-container .bar.status-not-started,
+        #ganttModal .bar.status-not-started,
+        .gantt-container .bar-progress.status-not-started,
+        #ganttModal .bar-progress.status-not-started {
+            fill: var(--status-not-started);
+            stroke: var(--status-not-started);
+        }
+        .gantt-container .bar.status-in-progress,
+        #ganttModal .bar.status-in-progress,
+        .gantt-container .bar-progress.status-in-progress,
+        #ganttModal .bar-progress.status-in-progress {
+            fill: var(--status-in-progress);
+            stroke: var(--status-in-progress);
+        }
+        .gantt-container .bar.status-on-hold,
+        #ganttModal .bar.status-on-hold,
+        .gantt-container .bar-progress.status-on-hold,
+        #ganttModal .bar-progress.status-on-hold {
+            fill: var(--status-on-hold);
+            stroke: var(--status-on-hold);
+        }
+        .gantt-container .bar.status-at-risk,
+        #ganttModal .bar.status-at-risk,
+        .gantt-container .bar-progress.status-at-risk,
+        #ganttModal .bar-progress.status-at-risk {
+            fill: var(--status-at-risk);
+            stroke: var(--status-at-risk);
+        }
+        .gantt-container .bar.status-done,
+        #ganttModal .bar.status-done,
+        .gantt-container .bar-progress.status-done,
+        #ganttModal .bar-progress.status-done {
+            fill: var(--status-done);
+            stroke: var(--status-done);
+        }
+
+        .table-container {
+            overflow-x: auto; /* Allow horizontal scrolling for the wide table */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap; /* Prevent table cells from wrapping */
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+            vertical-align: middle;
+            transition: font-size 0.2s ease;
+        }
+        .table-container td {
+            color: var(--table-text-color);
+        }
+        .kpi-detail-table {
+            margin-top: 8px;
+        }
+        thead th {
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .sort-indicator {
+            font-size: 1em;
+            vertical-align: middle;
+        }
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+        
+        .task-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .expand-toggle {
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+        
+        .task-row.collapsed > .task-name-cell .expand-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .progress-cell {
+            min-width: 150px;
+            cursor: pointer;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #E0E0E0;
+            border-radius: 4px;
+            height: 8px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--status-in-progress);
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            display: block; /* Always show progress value */
+        }
+
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: white;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        .status-done { background-color: var(--status-done); }
+        .status-in-progress { background-color: var(--status-in-progress); }
+        .status-on-hold { background-color: var(--status-on-hold); }
+        .status-at-risk { background-color: var(--status-at-risk); }
+        .status-open { background-color: var(--status-open); }
+        .status-resolved { background-color: var(--status-resolved); }
+        .status-not-started { background-color: var(--status-not-started); }
+        
+        /* Inline Edit & Delete Styles */
+        .task-row td[data-field-name] {
+            cursor: pointer;
+            position: relative;
+        }
+        .task-row td[data-field-name]:hover::after {
+            content: '✎'; /* Edit icon */
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1em;
+            opacity: 0.6;
+        }
+        /* Hide edit icon for Comments column */
+        .task-row td[data-field-name="Comments"]:hover::after {
+            content: none;
+        }
+        .action-cell .material-icons, .situation-icon {
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .action-cell .material-icons:hover, .situation-icon:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        .select-col {
+            text-align: center;
+        }
+        .root-task-row {
+            border-top: 2px solid var(--divider-color);
+        }
+
+        /* Highlight overdue tasks and issues */
+        .overdue-row {
+            background-color: rgba(242, 160, 161, 0.3);
+        }
+        .situation-sunny { color: var(--situation-sunny); }
+        .situation-cloudy { color: var(--situation-cloudy); }
+        .situation-thunderstorm { color: var(--situation-thunderstorm); }
+
+        .comment-icon {
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            position: relative;
+            transition: opacity 0.2s;
+        }
+        .comment-icon:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        .ack-comment {
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            position: absolute;
+            top: 0;
+            right: 1.5rem;
+            transition: opacity 0.2s;
+        }
+        .ack-comment:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        .delete-comment {
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            position: absolute;
+            top: 0;
+            right: 0;
+            transition: opacity 0.2s;
+        }
+        .delete-comment:hover {
+            opacity: 1;
+            color: var(--danger-color);
+        }
+        .comment-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px;
+            font-size: 0.7em;
+        }
+        .comment-entry.acknowledged {
+            opacity: 0.6;
+        }
+        .comment-entry.acknowledged .ack-comment {
+            color: var(--primary-color);
+        }
+        .mention {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            padding: 0 2px;
+        }
+
+        .type-icon {
+            vertical-align: middle;
+            font-size: 1em;
+        }
+
+        .inline-edit {
+            width: 95%;
+            padding: 8px;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            font-size: inherit; /* Inherit font size from table cell */
+            box-sizing: border-box;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateY(-50px);
+            transition: transform 0.3s;
+        }
+        #addItemModal .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #ganttModal .modal-content {
+            max-width: 95%;
+            width: 95%;
+        }
+        #ganttModal .gantt-container {
+            height: 80vh;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: auto; /* show scrollbar when chart is taller than modal */
+        }
+        #tableModal .modal-content {
+            max-width: 95%;
+            width: 95%;
+        }
+        #kpiModal .modal-content {
+            max-width: 95%;
+            width: 95%;
+        }
+        #tableModalContainer {
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        #kanbanModal .modal-content {
+            max-width: 95%;
+            width: 95%;
+        }
+        #kanbanModalContainer {
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--divider-color);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.8em;
+            color: var(--text-secondary);
+        }
+
+        #addItemForm {
+            display: grid;
+            gap: 16px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-field.hidden {
+            display: none;
+        }
+
+        /* Kanban Board Styles */
+        .kanban-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        #kanbanBoard {
+            display: flex;
+            gap: 1.5rem;
+            padding-bottom: 1rem;
+            overflow-x: auto;
+            min-width: 100%;
+        }
+        .kanban-column {
+            background: var(--card-background);
+            border: 1px solid var(--divider-color);
+            border-radius: 8px;
+            padding: 16px;
+            min-width: 240px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: background-color 0.3s;
+        }
+        .kanban-column h4 {
+            margin: 0 0 12px 0;
+            color: var(--text-primary);
+            font-size: 1.1em;
+            font-weight: 500;
+            text-align: center;
+            padding: 8px 0;
+            border-radius: 4px;
+        }
+        .kanban-column[data-status="Not Started"] h4 { background-color: var(--status-not-started); }
+        .kanban-column[data-status="In Progress"] h4 { background-color: var(--status-in-progress); }
+        .kanban-column[data-status="On Hold"] h4 { background-color: var(--status-on-hold); }
+        .kanban-column[data-status="At Risk"] h4 { background-color: var(--status-at-risk); }
+        .kanban-column[data-status="Done"] h4 { background-color: var(--status-done); }
+        .kanban-column[data-status="Open"] h4 { background-color: var(--status-open); }
+        .kanban-column[data-status="Resolved"] h4 { background-color: var(--status-resolved); }
+        .kanban-card {
+            background: var(--background-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kanban-card[data-priority="High"] {
+            border-left: 5px solid var(--priority-high);
+        }
+        .kanban-card[data-priority="Medium"] {
+            border-left: 5px solid var(--priority-medium);
+        }
+        .kanban-card[data-priority="Low"] {
+            border-left: 5px solid var(--priority-low);
+        }
+        .kanban-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+        .kanban-card.dragging {
+            opacity: 0.5;
+        }
+        .kanban-column.drag-over {
+            background: var(--divider-color);
+        }
+        .editable-cell .ql-toolbar {
+            padding: 0;
+            border: none;
+        }
+        .editable-cell .ql-container {
+            border: none;
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 5000;
+        }
+        .toast {
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin-top: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: transform 0.3s, opacity 0.3s;
+            font-size: 0.9em;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Sidebar Menu Styles */
+details.menu {
+    border: 1px solid var(--divider-color);
+    border-radius: 4px;
+    padding: 4px;
+    width: 100%;
+}
+details.menu summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+details.menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.menu-summary-icon {
+    font-size: 1.2em;
+    margin-right: 4px;
+}
+        details.menu details {
+            margin-left: 12px;
+            padding: 4px 0;
+        }
+        details.menu details summary {
+            font-weight: 500;
+        }
+
+        /* State cursor for navigation drawer */
+#drawer-state-cursor {
+    position: absolute;
+    left: 0;
+    width: 4px;
+    background-color: var(--primary-color);
+    border-radius: 0 4px 4px 0;
+    transition: top 0.3s, height 0.3s;
+    pointer-events: none;
+}
+
+/* When the drawer is collapsed, center the state cursor with the menu icons */
+#navigation-drawer.collapsed #drawer-state-cursor {
+    left: calc(50% - 2px);
+}
+
+/* --- Gantt Bar Status Colors --- */
+.gantt-container .gantt-bar-not-started .bar {
+    fill: var(--status-not-started);
+}
+.gantt-container .gantt-bar-in-progress .bar {
+    fill: var(--status-in-progress);
+}
+.gantt-container .gantt-bar-on-hold .bar {
+    fill: var(--status-on-hold);
+}
+.gantt-container .gantt-bar-at-risk .bar {
+    fill: var(--status-at-risk);
+}
+.gantt-container .gantt-bar-open .bar {
+    fill: var(--status-open);
+}
+.gantt-container .gantt-bar-done .bar {
+    fill: var(--status-done);
+}
+.gantt-container .gantt-bar-resolved .bar {
+    fill: var(--status-resolved);
+}
+
+/* --- Overdue Tasks --- */
+.gantt-container .gantt-bar-overdue .bar {
+    stroke: var(--danger-dark);
+    stroke-width: 2;
+    fill: var(--danger-color);
+}
+.gantt-container .gantt-bar-overdue .bar-progress {
+    fill: var(--danger-dark);
+}
+
+/* --- Gantt Progress Bar Colors (Optional) --- */
+.gantt-container .gantt-bar-not-started .bar-progress {
+    fill: var(--primary-dark);
+}
+.gantt-container .gantt-bar-in-progress .bar-progress {
+    fill: var(--primary-dark);
+}
+/* Use status colors for completed tasks */
+.gantt-container .gantt-bar-done .bar-progress {
+    fill: var(--status-done);
+}
+.gantt-container .gantt-bar-resolved .bar-progress {
+    fill: var(--status-resolved);
+}
+/* Add other progress bar status colors if needed */
+
+/* --- Baseline Bars --- */
+.gantt-container .bar-baseline {
+    stroke: #888;
+    stroke-dasharray: 4;
+    fill: none;
+    stroke-width: 2;
+}
+
+/* Show resize handles when hovering over a task bar */
+.gantt-container .bar-wrapper:hover .handle {
+    opacity: 1;
+}
+
+.gantt-container .milestone-marker {
+    fill: #ffd794;
+    stroke: #ffd794;
+}
+
+.gantt-container .milestone-label {
+    text-anchor: start;
+}
+
+.gantt-container .milestone-row .bar {
+    fill: transparent;
+    stroke: none;
+}
+
+/* Styling for Gantt navigation controls */
+.zoom-controls .gantt-control-divider {
+    display: inline-block;
+    width: 1px;
+    height: 24px;
+    background-color: var(--divider-color);
+    margin: 0 8px;
+    vertical-align: middle;
+}
+
+/* --- Responsive Styles --- */
+@media (max-width: 48rem) {
+    :root {
+        --drawer-width: 17.5rem;
+    }
+
+    #main-container {
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 2em;
+    }
+
+    #navigation-drawer.collapsed .menu-summary,
+    #navigation-drawer.collapsed .file-label {
+        font-size: 0;
+        justify-content: center;
+    }
+}
