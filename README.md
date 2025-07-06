@@ -6,7 +6,7 @@ This repository contains utilities and a simple web dashboard for managing tasks
 
 - **Node.js** v18 or higher
 - **npm** (comes with Node)
-- A modern web browser to view `dashboard.html`
+- A modern web browser to view `index.html`
 
 ## Installation
 
@@ -33,7 +33,7 @@ npm test
 
 ## Using the Dashboard
 
-Open `dashboard.html` in your web browser. Required libraries are included in the
+Open `index.html` in your web browser. Required libraries are included in the
 `vendor` folder so the dashboard works even without internet access.
 
 ### Importing Data
