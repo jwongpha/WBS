@@ -24,7 +24,7 @@ sequenceDiagram
     participant DB as IndexedDB
 
     %% Initial Load
-    U->>B: Open dashboard.html
+    U->>B: Open index.html
     B->>JS: DOMContentLoaded
     JS->>DB: get(projectData)
     alt Data exists

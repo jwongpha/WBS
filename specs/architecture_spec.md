@@ -8,7 +8,7 @@ The application runs entirely in the browser with no backend server. All data pr
 ## 2. Frontend Architecture
 The frontend uses standard web technologies:
 
-- **HTML** (`dashboard.html`) defines the application's structure, layout, and modal dialogs.
+- **HTML** (`index.html`) defines the application's structure, layout, and modal dialogs.
 - **CSS** (`dashboard.css`) provides styling with a pastel theme, responsive layout, and dark mode support.
 - **JavaScript** (`dashboard.js`) contains the core logic for DOM manipulation, event handling, state management, and integration with external libraries.
 
@@ -60,7 +60,7 @@ helper modules, persists to IndexedDB, and updates UI components such as the
 KPIs, Gantt chart, task table and Kanban board.
 
 ## 5. External Libraries and Dependencies
-Key libraries loaded via CDN in `dashboard.html` include:
+Key libraries loaded via CDN in `index.html` include:
 
 - **Chart.js** – used for Gantt and donut charts.
 - **PapaParse** – CSV parsing.
