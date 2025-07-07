@@ -76,7 +76,7 @@ bars for each task. The setting is saved so your preference persists when you
 reopen the dashboard.
 
 Click any bar in the Gantt chart to highlight the corresponding row in the task
-table.
+table. The row's select checkbox is also checked automatically.
 
 ### Kanban Board
 
