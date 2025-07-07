@@ -967,6 +967,19 @@ header {
             right: 1.5rem;
             transition: opacity 0.2s;
         }
+        .edit-comment {
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            position: absolute;
+            top: 0;
+            right: 3rem;
+            transition: opacity 0.2s;
+        }
+        .edit-comment:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
         .ack-comment:hover {
             opacity: 1;
             color: var(--primary-color);
