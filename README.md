@@ -52,7 +52,9 @@ of each task. The PDF is created client-side using jsPDF, so no additional
 setup is required.
 
 Use **Export Gantt as PDF** to save the timeline. The Gantt chart is rendered
-with Mermaid and converted to a PDF using the svg2pdf.js plugin.
+with Mermaid and converted to a PDF using the svg2pdf.js plugin. Copies of
+jsPDF, jspdf-autotable and svg2pdf.js are included in the `vendor` folder so
+PDF export works without an internet connection.
 
 ### Duplicating Tasks
 
