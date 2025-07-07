@@ -198,6 +198,7 @@ const clearFiltersButton = document.getElementById('clearFiltersButton');
 const resetButton = document.getElementById('resetButton');
 const exportCsvButton = document.getElementById('exportCsvButton');
 const exportPdfButton = document.getElementById('exportPdfButton');
+const exportGanttPdfButton = document.getElementById('exportGanttPdfButton');
 const importCommentsBtn = document.getElementById('importCommentsBtn');
 const exportCommentsBtn = document.getElementById('exportCommentsBtn');
 const commentsCsvFile = document.getElementById('commentsCsvFile');
@@ -2106,6 +2107,36 @@ function exportDataToPdf() {
   showToast('Data exported to PDF');
 }
 
+function generateMermaidGanttCode(tasks) {
+  const lines = ['gantt', '  dateFormat  YYYY-MM-DD'];
+  tasks.forEach(t => {
+    const start = t['Start Date'];
+    const end = t['End Date'];
+    if (!start || !end) return;
+    const name = String(t['Task Name']).replace(/:/g, '');
+    lines.push(`  ${name} :${t.TaskID}, ${start}, ${end}`);
+  });
+  return lines.join('\n');
+}
+
+function exportGanttToPdf() {
+  if (window.allTaskData.length === 0) {
+    showCustomAlert('No data to export.');
+    return;
+  }
+
+  const code = generateMermaidGanttCode(window.allTaskData);
+  mermaid.mermaidAPI.render('gantt-export', code, async svgCode => {
+    const parser = new DOMParser();
+    const svgElement = parser.parseFromString(svgCode, 'image/svg+xml').documentElement;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape', 'pt', 'a4');
+    await svg2pdf(svgElement, doc, { xOffset: 0, yOffset: 0 });
+    doc.save('gantt_chart.pdf');
+    showToast('Gantt chart exported to PDF');
+  });
+}
+
 function exportCommentsToCsv() {
 const allComments = [];
 window.allTaskData.forEach(task => {
@@ -3745,6 +3776,7 @@ typeSwitchCheckboxes.forEach(cb => cb.addEventListener('change', () => {
 
 exportCsvButton.addEventListener('click', exportDataToCsv);
 exportPdfButton.addEventListener('click', exportDataToPdf);
+exportGanttPdfButton.addEventListener('click', exportGanttToPdf);
 removeDuplicatesBtn.addEventListener('click', removeDuplicatesFromCurrentData); // Event listener for the new button
 deleteSelectedBtn.addEventListener('click', async () => {
 const ids = Array.from(taskMatrixTableBody.querySelectorAll('.task-select:checked')).map(cb => cb.dataset.taskId);
