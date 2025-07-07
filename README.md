@@ -64,6 +64,9 @@ above the table to create duplicates. This works the same as the
 
 ### Gantt Chart View
 
+The timeline is now rendered with [jsGanttImproved](https://github.com/jsGanttImproved/jsgantt-improved),
+which is bundled in the `vendor` folder for offline use.
+
 Use the drop-down next to the Gantt zoom buttons to switch between Month,
 Week, Day, Half Day and Quarter Day view modes.
 
