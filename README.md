@@ -51,6 +51,9 @@ progress percentage and the DETAILS column so you get a more complete snapshot
 of each task. The PDF is created client-side using jsPDF, so no additional
 setup is required.
 
+Use **Export Gantt as PDF** to save the timeline. The Gantt chart is rendered
+with Mermaid and converted to a PDF using the svg2pdf.js plugin.
+
 ### Duplicating Tasks
 
 Select one or more rows in the task table and click the copy icon that appears

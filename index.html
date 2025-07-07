@@ -30,7 +30,9 @@
     <!-- jsPDF library for exporting PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg2pdf.js/1.5.5/svg2pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.4.0/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: false });</script>
 
     <link rel="stylesheet" href="dashboard.css">
 </head>
@@ -57,6 +59,7 @@
                     <div class="action-group">
                         <button id="exportCsvButton" class="action-btn"><span class="material-icons">download</span>Export Data as CSV</button>
                         <button id="exportPdfButton" class="action-btn btn-secondary"><span class="material-icons">picture_as_pdf</span>Export Data as PDF</button>
+                        <button id="exportGanttPdfButton" class="action-btn btn-secondary"><span class="material-icons">view_timeline</span>Export Gantt as PDF</button>
                         <button id="exportCommentsBtn" class="action-btn btn-secondary"><span class="material-icons">file_download</span>Export Comments</button>
                     </div>
                 </div>
