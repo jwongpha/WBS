@@ -2119,22 +2119,27 @@ function generateMermaidGanttCode(tasks) {
   return lines.join('\n');
 }
 
-function exportGanttToPdf() {
+async function exportGanttToPdf() {
   if (window.allTaskData.length === 0) {
     showCustomAlert('No data to export.');
     return;
   }
 
   const code = generateMermaidGanttCode(window.allTaskData);
-  mermaid.mermaidAPI.render('gantt-export', code, async svgCode => {
+
+  try {
+    const { svg } = await mermaid.render('gantt-export', code);
     const parser = new DOMParser();
-    const svgElement = parser.parseFromString(svgCode, 'image/svg+xml').documentElement;
+    const svgElement = parser.parseFromString(svg, 'image/svg+xml').documentElement;
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('landscape', 'pt', 'a4');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     await svg2pdf(svgElement, doc, { xOffset: 0, yOffset: 0 });
     doc.save('gantt_chart.pdf');
     showToast('Gantt chart exported to PDF');
-  });
+  } catch (err) {
+    console.error(err);
+    showCustomAlert('Failed to generate Gantt PDF.');
+  }
 }
 
 function exportCommentsToCsv() {
