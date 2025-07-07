@@ -220,6 +220,12 @@ const newCommentText = document.getElementById('newCommentText');
 const newCommentAuthor = document.getElementById('newCommentAuthor');
 const addCommentBtn = document.getElementById('addCommentBtn');
 const cancelEditCommentBtn = document.getElementById('cancelEditCommentBtn');
+const itemCommentsSection = document.getElementById('itemCommentsSection');
+const itemCommentsList = document.getElementById('itemCommentsList');
+const itemCommentText = document.getElementById('itemCommentText');
+const itemCommentAuthor = document.getElementById('itemCommentAuthor');
+const itemAddCommentBtn = document.getElementById('itemAddCommentBtn');
+const itemCancelEditCommentBtn = document.getElementById('itemCancelEditCommentBtn');
 const ganttZoomIn = document.getElementById('ganttZoomIn');
 const ganttZoomOut = document.getElementById('ganttZoomOut');
 const openGanttModalBtn = document.getElementById('openGanttModalBtn');
@@ -2337,10 +2343,18 @@ document.getElementById('itemPhase').value = task.Phase || '';
 Array.from(predecessorSelect.options).forEach(o => { if (Array.isArray(task.Predecessors) && task.Predecessors.includes(o.value)) o.selected = true; });
 Array.from(successorSelect.options).forEach(o => { if (Array.isArray(task.Successors) && task.Successors.includes(o.value)) o.selected = true; });
 toggleModalFields();
+if (itemCommentsSection) {
+  itemCommentsSection.classList.remove('hidden');
+  populateItemComments(taskId);
+}
 }
 } else {
 modalTitle.textContent = 'Add New Item';
 updateStatusOptions(itemTypeSelect.value);
+if (itemCommentsSection) {
+  itemCommentsSection.classList.add('hidden');
+  itemCommentTaskId = null;
+}
 }
 
 addItemModal.style.display = 'flex';
@@ -2388,15 +2402,42 @@ opt.style.display = opt.textContent.toLowerCase().includes(f) ? '' : 'none';
 }
 
 function hideAddItemModal() {
-addItemModal.classList.remove('show');
-addItemModal.style.display = 'none';
-editingTaskId = null;
-const modalTitle = addItemModal.querySelector('.modal-header h2');
-if (modalTitle) modalTitle.textContent = 'Add New Item';
+  addItemModal.classList.remove('show');
+  addItemModal.style.display = 'none';
+  editingTaskId = null;
+  const modalTitle = addItemModal.querySelector('.modal-header h2');
+  if (modalTitle) modalTitle.textContent = 'Add New Item';
+}
+
+function populateItemComments(taskId) {
+  itemCommentTaskId = taskId;
+  itemEditingCommentIndex = null;
+  if (!itemCommentsSection) return;
+  const task = window.allTaskData.find(t => t.TaskID === taskId);
+  const comments = task && Array.isArray(task.Comments) ? task.Comments : [];
+  if (comments.length > 0) {
+    itemCommentsList.innerHTML = comments.map((c, idx) => {
+      const textWithMentions = c.text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+      return `<div class="comment-entry ${c.acknowledged ? 'acknowledged' : ''}" data-comment-index="${idx}" style="margin-bottom:8px; position:relative;">
+        <strong>${c.author}</strong> (${new Date(c.timestamp).toLocaleString()}):<br>${textWithMentions}
+        <span class="material-icons edit-comment" data-comment-index="${idx}">edit</span>
+        <span class="material-icons ack-comment" data-comment-index="${idx}">check_circle</span>
+        <span class="material-icons delete-comment" data-comment-index="${idx}">delete</span>
+      </div>`;
+    }).join('');
+  } else {
+    itemCommentsList.innerHTML = '<p>No comments yet.</p>';
+  }
+  itemCommentText.value = '';
+  itemCommentAuthor.value = '';
+  itemAddCommentBtn.textContent = 'Add Comment';
+  itemCancelEditCommentBtn.classList.add('hidden');
 }
 
 let currentCommentTaskId = null;
 let editingCommentIndex = null;
+let itemCommentTaskId = null;
+let itemEditingCommentIndex = null;
 
 function showCommentsModal(taskId) {
   currentCommentTaskId = taskId;
@@ -3403,6 +3444,93 @@ window.applyFilters();
 showToast('Comment updated');
 }
 }
+});
+
+itemCancelEditCommentBtn.addEventListener('click', () => {
+  itemEditingCommentIndex = null;
+  itemCommentText.value = '';
+  itemCommentAuthor.value = '';
+  itemAddCommentBtn.textContent = 'Add Comment';
+  itemCancelEditCommentBtn.classList.add('hidden');
+});
+
+itemAddCommentBtn.addEventListener('click', async () => {
+  if (!itemCommentTaskId) return;
+  const task = window.allTaskData.find(t => t.TaskID === itemCommentTaskId);
+  if (!task) return;
+  const text = itemCommentText.value.trim();
+  if (!text) return;
+  const author = itemCommentAuthor.value.trim() || 'Anonymous';
+  const mentionRegex = /@(\w+)/g;
+  const mentions = Array.from(text.matchAll(mentionRegex)).map(m => m[1]);
+  const knownNames = new Set(window.allTaskData.map(t => (t.Owner || '').toLowerCase()));
+  const validMentions = mentions.filter(m => knownNames.has(m.toLowerCase()));
+
+  if (!Array.isArray(task.Comments)) task.Comments = [];
+
+  if (itemEditingCommentIndex !== null && task.Comments[itemEditingCommentIndex]) {
+    const existing = task.Comments[itemEditingCommentIndex];
+    existing.text = text;
+    existing.author = author;
+    existing.timestamp = new Date().toISOString();
+    if (validMentions.length > 0) {
+      existing.mentions = validMentions;
+      showToast(`Mentioned: ${validMentions.join(', ')}`);
+    }
+    showToast('Comment updated');
+  } else {
+    const comment = { author, text, timestamp: new Date().toISOString(), acknowledged: false };
+    if (validMentions.length > 0) {
+      comment.mentions = validMentions;
+      showToast(`Mentioned: ${validMentions.join(', ')}`);
+    }
+    task.Comments.push(comment);
+    showToast('Comment added');
+  }
+
+  await saveProjectData();
+  populateItemComments(itemCommentTaskId);
+});
+
+itemCommentsList.addEventListener('click', async (e) => {
+  const edit = e.target.closest('.edit-comment');
+  if (edit) {
+    const idx = parseInt(edit.dataset.commentIndex, 10);
+    const task = window.allTaskData.find(t => t.TaskID === itemCommentTaskId);
+    if (task && Array.isArray(task.Comments) && task.Comments[idx]) {
+      const c = task.Comments[idx];
+      itemCommentText.value = c.text;
+      itemCommentAuthor.value = c.author;
+      itemEditingCommentIndex = idx;
+      itemAddCommentBtn.textContent = 'Save Comment';
+      itemCancelEditCommentBtn.classList.remove('hidden');
+    }
+    return;
+  }
+  const del = e.target.closest('.delete-comment');
+  if (del) {
+    const idx = parseInt(del.dataset.commentIndex, 10);
+    const task = window.allTaskData.find(t => t.TaskID === itemCommentTaskId);
+    if (task && Array.isArray(task.Comments)) {
+      task.Comments.splice(idx, 1);
+      await saveProjectData();
+      populateItemComments(itemCommentTaskId);
+      showToast('Comment deleted');
+    }
+    return;
+  }
+  const ack = e.target.closest('.ack-comment');
+  if (ack) {
+    const idx = parseInt(ack.dataset.commentIndex, 10);
+    const task = window.allTaskData.find(t => t.TaskID === itemCommentTaskId);
+    if (task && Array.isArray(task.Comments) && task.Comments[idx]) {
+      task.Comments[idx].acknowledged = !task.Comments[idx].acknowledged;
+      await saveProjectData();
+      populateItemComments(itemCommentTaskId);
+      window.applyFilters();
+      showToast('Comment updated');
+    }
+  }
 });
 
 filterButton.addEventListener('click', () => {
