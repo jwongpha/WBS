@@ -1508,11 +1508,13 @@ function positionGanttLabelsLeft(gantt) {
     });
 }
 
-// Update CSS row height variable to match the Gantt chart's row height
+// Update CSS variables to match the Gantt chart dimensions
 function updateGanttRowHeight(gantt) {
     if (!gantt || !gantt.options) return;
     const height = (gantt.options.bar_height || 0) + (gantt.options.padding || 0);
     document.documentElement.style.setProperty('--gantt-row-height', `${height}px`);
+    const header = gantt.options.header_height || 0;
+    document.documentElement.style.setProperty('--gantt-header-height', `${header}px`);
 }
 
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {

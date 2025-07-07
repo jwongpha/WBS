@@ -16,8 +16,9 @@
             --drawer-rail-width: 5rem;
             --drawer-background: linear-gradient(180deg, #FFFFFF 0%, #E8F0FE 100%);
             --scrollbar-thumb-color: #C8C8C8;
-            /* Default row height roughly matching Frappe Gantt */
+            /* Default sizes roughly matching Frappe Gantt */
             --gantt-row-height: 48px;
+            --gantt-header-height: 50px;
 
             /* Status Colors - Gemini Palette */
             --status-done: #34A853; /* Green */
@@ -699,6 +700,7 @@ header {
         .gantt-task-list {
             border-right: 1px solid var(--divider-color);
             overflow-y: auto;
+            padding-top: var(--gantt-header-height);
         }
 
         .gantt-task-row {
