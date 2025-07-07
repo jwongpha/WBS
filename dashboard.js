@@ -1418,7 +1418,10 @@ function attachGanttClick(gantt) {
         if (bar._clickHandler) {
             bar.group.removeEventListener('click', bar._clickHandler);
         }
-        bar._clickHandler = () => highlightTableRowById(id);
+        bar._clickHandler = () => {
+            // Only highlight the related table row when not in Gantt edit mode
+            if (!ganttEditMode) highlightTableRowById(id);
+        };
         bar.group.addEventListener('click', bar._clickHandler);
     });
 }
