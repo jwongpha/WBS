@@ -1239,6 +1239,21 @@ function initFrappeGantt(elementId, tasks, viewMode = 'Day') {
         Object.values(Gantt.VIEW_MODE).forEach(m => m.padding = '0d');
     }
 
+    const popup = (ctx) => {
+        ctx.set_title(ctx.task.name);
+        const fmt = d => {
+            const date = new Date(d);
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        };
+        const start = fmt(ctx.task._start);
+        const end = fmt(new Date(ctx.task._end.getTime() - 1000));
+        let details = `${start} - ${end}<br/>Progress: ${Math.floor(ctx.task.progress * 100) / 100}%`;
+        if (ctx.task.progress_detail) {
+            details += `<br/>DETAILS: ${ctx.task.progress_detail}`;
+        }
+        ctx.set_details(details);
+    };
+
     return new Gantt(container, tasks, {
         view_mode: viewMode,
         on_date_change: onGanttDateChange,
@@ -1246,7 +1261,8 @@ function initFrappeGantt(elementId, tasks, viewMode = 'Day') {
         infinite_padding: false,
         readonly: false,
         readonly_dates: false,
-        readonly_progress: false
+        readonly_progress: false,
+        popup
     });
 }
 
@@ -1496,7 +1512,8 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             progress: parseFloat(t['Progress (%)']) || 0,
             dependencies: Array.isArray(t.Predecessors) ? t.Predecessors.join(',') : (t.Predecessors || ''),
             custom_class: customClass,
-            Type: t.Type
+            Type: t.Type,
+            progress_detail: t['Progress Detail'] || ''
         });
 
         if (milestoneMap.has(t.TaskID)) {
