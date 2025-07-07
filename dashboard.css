@@ -953,6 +953,18 @@ header {
             border-top: 2px solid var(--divider-color);
         }
 
+        .task-row .task-name-cell {
+            padding-left: var(--indentation, 0);
+        }
+
+        .parent-task-row {
+            background-color: var(--secondary-color);
+        }
+
+        .parent-task-row .task-name-cell span[data-field-name="Task Name"] {
+            font-weight: bold;
+        }
+
         /* Highlight overdue tasks and issues */
         .overdue-row {
             background-color: rgba(242, 160, 161, 0.3);

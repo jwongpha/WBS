@@ -972,24 +972,30 @@ window.applyFilters();
 
 // Populate table body
 visibleTasks.forEach(task => {
-const row = document.createElement('tr');
-const level = parseInt(task.Level || 1);
-row.className = 'task-row' + (task._isCollapsed ? ' collapsed' : '');
-row.dataset.taskId = task.TaskID;
-row.dataset.level = level;
-const endDate = parseDateLocal(task['End Date']);
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const isOverdue = endDate < today && task.Status !== 'Done';
-if (isOverdue) {
-row.classList.add('overdue-row');
-}
-if (level === 1) {
-row.classList.add('root-task-row');
-}
-if (task.ParentID) {
-row.dataset.parentId = task.ParentID;
-}
+    const row = document.createElement('tr');
+    const level = parseInt(task.Level || 1);
+    row.className = 'task-row' + (task._isCollapsed ? ' collapsed' : '');
+    row.dataset.taskId = task.TaskID;
+    row.dataset.level = level;
+    const indentation = (level - 1) * 25;
+    row.style.setProperty('--indentation', `${indentation}px`);
+    const isParent = window.allTaskData.some(t => t.ParentID === task.TaskID);
+    const endDate = parseDateLocal(task['End Date']);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isOverdue = endDate < today && task.Status !== 'Done';
+    if (isOverdue) {
+        row.classList.add('overdue-row');
+    }
+    if (level === 1) {
+        row.classList.add('root-task-row');
+    }
+    if (isParent) {
+        row.classList.add('parent-task-row');
+    }
+    if (task.ParentID) {
+        row.dataset.parentId = task.ParentID;
+    }
 
 const selectCell = document.createElement('td');
 selectCell.className = 'select-col';
@@ -1000,8 +1006,6 @@ window.columnOrder.forEach(columnName => {
 const cell = document.createElement('td');
 cell.setAttribute('data-field-name', columnName); // Set data-field-name on td for editing
 
-const level = parseInt(task.Level || 1);
-const indentation = (level - 1) * 25;
 
 // Handle content for each column based on data field name
         switch (columnName) {
@@ -1014,13 +1018,13 @@ cell.innerHTML = getTypeIcon(task.Type);
 break;
 case 'Task Name':
 // Check for parent in *allTaskData* for expand/collapse toggle
-const isParent = window.allTaskData.some(t => t.ParentID === task.TaskID);
+// use isParent variable from outer scope
 const hasIssues = window.allTaskData.some(i => i.ParentID === task.TaskID && i.Type === 'Issue');
 const issueIconHtml = hasIssues ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">bug_report</span>` : '';
 const delayIconHtml = isOverdue ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">schedule</span>` : '';
 const expandIcon = isParent ? `<span class="material-icons expand-toggle">${task._isCollapsed ? 'chevron_right' : 'expand_more'}</span>` : `<span style="width: 24px; display: inline-block;"></span>`;
 cell.innerHTML = `
-<div class="task-name-cell" style="padding-left: ${indentation}px;">
+<div class="task-name-cell">
 ${expandIcon}
 <span data-field-name="Task Name">${task['Task Name']}</span>
 ${issueIconHtml}
