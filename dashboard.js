@@ -1606,9 +1606,11 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             if (list && scrollContainer) {
                 list.innerHTML = '';
                 tasks.forEach(t => {
-                    if (t.Type === 'MilestoneRow') return;
                     const row = document.createElement('div');
                     row.className = 'gantt-task-row';
+                    if (t.Type === 'MilestoneRow') {
+                        row.classList.add('milestone-row');
+                    }
                     row.textContent = t.name;
                     list.appendChild(row);
                 });
