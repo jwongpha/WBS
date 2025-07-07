@@ -1263,7 +1263,7 @@ function initJsGantt(elementId, tasks, viewMode = 'Day') {
             pEnd: formatDateLocal(t.end),
             pClass: t.custom_class || 'gtaskblue',
             pLink: '',
-            pMile: 0,
+            pMile: t.is_milestone ? 1 : 0,
             pRes: t.Owner || '',
             pComp: Math.round(t.progress || 0),
             pGroup: 0,
@@ -1384,25 +1384,14 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const milestoneMap = new Map();
-    data.forEach(t => {
-        if (t.Type === 'Vehicle Milestone' && t.ParentID) {
-            if (!milestoneMap.has(t.ParentID)) milestoneMap.set(t.ParentID, []);
-            milestoneMap.get(t.ParentID).push({
-                date: parseDateLocal(t[startKey] || t[endKey]),
-                name: t[labelKey]
-            });
-        }
-    });
-
     const tasks = [];
     const fmt = d => formatDateLocal(d);
     data.forEach(t => {
-        if (t.Type === 'Vehicle Milestone') return; // skip individual milestone rows
         const statusClass = (t.Status || 'default').toLowerCase().replace(/ /g, '-');
         const endDate = parseDateLocal(t[endKey]);
         const overdue = endDate && endDate < today && t.Status !== 'Done' && t.Status !== 'Resolved';
         const customClass = overdue ? 'gantt-bar-overdue' : `gantt-bar-${statusClass}`;
+        const isMilestone = t.Type === 'Vehicle Milestone' || (t['Is Milestone?'] && t['Is Milestone?'].toLowerCase() === 'yes');
         tasks.push({
             id: t.TaskID,
             name: t[labelKey],
@@ -1415,31 +1404,11 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             custom_class: customClass,
             Type: t.Type,
             progress_detail: t['Progress Detail'] || '',
-            label_color: t.LabelColor || (t.TextColors && t.TextColors['Task Name'])
+            label_color: t.LabelColor || (t.TextColors && t.TextColors['Task Name']),
+            Owner: t.Owner,
+            is_milestone: isMilestone,
+            parentID: t.ParentID
         });
-
-        if (milestoneMap.has(t.TaskID)) {
-            const dates = milestoneMap.get(t.TaskID)
-                .map(m => parseDateLocal(m.date))
-                .filter(d => !isNaN(d));
-            if (dates.length > 0) {
-                const start = new Date(Math.min(...dates));
-                const end = new Date(Math.max(...dates));
-                tasks.push({
-                    id: `${t.TaskID}-milestones`,
-                    name: 'Milestones',
-                    start: fmt(start),
-                    end: fmt(end),
-                    baseline_start: fmt(start),
-                    baseline_end: fmt(end),
-                    progress: 0,
-                    dependencies: '',
-                    custom_class: 'milestone-row',
-                    Type: 'MilestoneRow',
-                    parentID: t.TaskID
-                });
-            }
-        }
     });
 
     const viewMode = selectBestViewMode(tasks);
