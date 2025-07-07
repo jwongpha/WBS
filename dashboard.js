@@ -1488,6 +1488,26 @@ function attachGanttLabelContextMenu(gantt) {
     });
 }
 
+// Position bar labels to the left of each task bar
+function positionGanttLabelsLeft(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group) return;
+        const label = bar.group.querySelector('.bar-label');
+        if (!label) return;
+        const original = bar._originalUpdateLabel || bar.update_label_position;
+        bar._originalUpdateLabel = original;
+        bar.update_label_position = function() {
+            if (original) original.call(this);
+            const lbl = this.group.querySelector('.bar-label');
+            if (!lbl || !this.$bar) return;
+            lbl.setAttribute('text-anchor', 'end');
+            lbl.setAttribute('x', this.$bar.getX() - 5);
+        };
+        bar.update_label_position();
+    });
+}
+
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const container = document.getElementById(elementId);
     if (!container) return null;
@@ -1566,6 +1586,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     attachGanttDoubleClick(gantt);
     attachGanttClick(gantt);
     attachGanttLabelContextMenu(gantt);
+    positionGanttLabelsLeft(gantt);
     charts[elementId] = gantt;
     const idx = ganttViewModes.indexOf(viewMode);
     currentGanttView = idx !== -1 ? idx : ganttViewModes.indexOf('Day');
@@ -1598,6 +1619,7 @@ function zoomGantt(direction) {
     attachGanttDoubleClick(chart);
     attachGanttClick(chart);
     attachGanttLabelContextMenu(chart);
+    positionGanttLabelsLeft(chart);
     if (ganttViewModeSelect) {
         ganttViewModeSelect.value = ganttViewModes[currentGanttView];
     }
@@ -1629,6 +1651,7 @@ function changeGanttView(mode) {
         attachGanttDoubleClick(chart);
         attachGanttClick(chart);
         attachGanttLabelContextMenu(chart);
+        positionGanttLabelsLeft(chart);
 
         // 3. AFTER re-rendering, scroll back to the preserved center date.
         // A timeout ensures the DOM has fully updated from the re-render.
@@ -1650,6 +1673,7 @@ function changeGanttModalView(mode) {
         attachGanttDoubleClick(chart);
         attachGanttClick(chart);
         attachGanttLabelContextMenu(chart);
+        positionGanttLabelsLeft(chart);
     }
 }
 
@@ -2742,6 +2766,7 @@ function showGanttModal() {
         attachGanttDoubleClick(charts.ganttModal);
         attachGanttClick(charts.ganttModal);
         attachGanttLabelContextMenu(charts.ganttModal);
+        positionGanttLabelsLeft(charts.ganttModal);
     }
     if (ganttViewModeModalSelect) {
         ganttViewModeModalSelect.value = ganttViewModes[currentGanttView];
@@ -3861,6 +3886,7 @@ baselineToggle.addEventListener('change', () => {
             attachGanttDoubleClick(charts.gantt);
             attachGanttClick(charts.gantt);
             attachGanttLabelContextMenu(charts.gantt);
+            positionGanttLabelsLeft(charts.gantt);
         }
         if (charts.ganttModal) {
             addBaselineBars(charts.ganttModal);
@@ -3868,6 +3894,7 @@ baselineToggle.addEventListener('change', () => {
             attachGanttDoubleClick(charts.ganttModal);
             attachGanttClick(charts.ganttModal);
             attachGanttLabelContextMenu(charts.ganttModal);
+            positionGanttLabelsLeft(charts.ganttModal);
         }
     });
 
@@ -3882,6 +3909,7 @@ if (toggleBaselineBtn) {
             attachGanttDoubleClick(charts.gantt);
             attachGanttClick(charts.gantt);
             attachGanttLabelContextMenu(charts.gantt);
+            positionGanttLabelsLeft(charts.gantt);
         }
         if (charts.ganttModal) {
             addBaselineBars(charts.ganttModal);
@@ -3889,6 +3917,7 @@ if (toggleBaselineBtn) {
             attachGanttDoubleClick(charts.ganttModal);
             attachGanttClick(charts.ganttModal);
             attachGanttLabelContextMenu(charts.ganttModal);
+            positionGanttLabelsLeft(charts.ganttModal);
         }
     });
 }
