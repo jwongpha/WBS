@@ -713,6 +713,11 @@ header {
             background: var(--card-background);
         }
 
+        .gantt-task-row.milestone-row {
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
         /* Allow pointer events on task bars in both modes so clicks work */
 
         .gantt-container:not(.edit-mode) .bar-wrapper,
