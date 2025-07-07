@@ -1442,31 +1442,6 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
         gantt.currentView = viewMode;
     }
     charts[elementId] = gantt;
-    if (elementId === 'ganttChart') {
-        const wrapper = container.closest('.gantt-wrapper');
-        if (wrapper) {
-            const list = wrapper.querySelector('#ganttTaskList');
-            const scrollContainer = wrapper.parentElement;
-            if (list && scrollContainer) {
-                list.innerHTML = '';
-                tasks.forEach(t => {
-                    const row = document.createElement('div');
-                    row.className = 'gantt-task-row';
-                    if (t.Type === 'MilestoneRow') {
-                        row.classList.add('milestone-row');
-                    }
-                    row.textContent = t.name;
-                    list.appendChild(row);
-                });
-                scrollContainer.addEventListener('scroll', () => {
-                    list.scrollTop = scrollContainer.scrollTop;
-                });
-                list.addEventListener('scroll', () => {
-                    scrollContainer.scrollTop = list.scrollTop;
-                });
-            }
-        }
-    }
     const idx = ganttViewModes.indexOf(viewMode);
     currentGanttView = idx !== -1 ? idx : ganttViewModes.indexOf('Day');
     if (elementId === 'ganttChart' && ganttViewModeSelect) {

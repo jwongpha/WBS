@@ -692,30 +692,7 @@ header {
         }
 
         .gantt-wrapper {
-            display: grid;
-            grid-template-columns: 200px 1fr;
             overflow: hidden;
-        }
-
-        .gantt-task-list {
-            border-right: 1px solid var(--divider-color);
-            overflow-y: auto;
-            padding-top: var(--gantt-header-height);
-        }
-
-        .gantt-task-row {
-            height: var(--gantt-row-height);
-            display: flex;
-            align-items: center;
-            padding-left: 0.5rem;
-            font-size: 0.85em;
-            border-bottom: 1px solid var(--divider-color);
-            background: var(--card-background);
-        }
-
-        .gantt-task-row.milestone-row {
-            font-style: italic;
-            color: var(--text-secondary);
         }
 
         /* Allow pointer events on task bars in both modes so clicks work */
