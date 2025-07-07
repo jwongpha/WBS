@@ -235,6 +235,7 @@ const ganttModal = document.getElementById('ganttModal');
 const closeGanttModalBtn = document.getElementById('closeGanttModalBtn');
 const ganttContainer = document.querySelector('.gantt-container');
 const ganttContainers = document.querySelectorAll('.gantt-container');
+const tableContainer = document.querySelector('.table-container');
 const ganttScrollLeft = document.getElementById('ganttScrollLeft');
 const ganttScrollRight = document.getElementById('ganttScrollRight');
 const ganttScrollUp = document.getElementById('ganttScrollUp');
@@ -4151,6 +4152,25 @@ function setupGanttDrag(container) {
 
 ganttContainers.forEach(setupGanttDrag);
 updateGanttEditButtons();
+
+// Keep Gantt chart and table scrolling in sync vertically
+if (tableContainer && ganttContainer) {
+    let syncingScroll = false;
+
+    tableContainer.addEventListener('scroll', () => {
+        if (syncingScroll) return;
+        syncingScroll = true;
+        ganttContainer.scrollTop = tableContainer.scrollTop;
+        requestAnimationFrame(() => { syncingScroll = false; });
+    });
+
+    ganttContainer.addEventListener('scroll', () => {
+        if (syncingScroll) return;
+        syncingScroll = true;
+        tableContainer.scrollTop = ganttContainer.scrollTop;
+        requestAnimationFrame(() => { syncingScroll = false; });
+    });
+}
 
 ganttFirstTaskBtn.addEventListener('click', scrollToFirstTask);
 ganttModal.addEventListener('click', (e) => { if (e.target === ganttModal) hideGanttModal(); });

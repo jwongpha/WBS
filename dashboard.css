@@ -833,6 +833,13 @@ header {
             overflow-x: auto; /* Allow horizontal scrolling for the wide table */
         }
 
+        /* Keep table rows aligned with the Gantt chart */
+        #taskMatrixTable tbody tr {
+            height: var(--gantt-row-height);
+            max-height: var(--gantt-row-height);
+            overflow: hidden;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
