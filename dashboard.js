@@ -1434,12 +1434,16 @@ function attachGanttLabelContextMenu(gantt) {
         if (!bar.group) return;
         const label = bar.group.querySelector('.bar-label');
         if (!label) return;
+        if (bar.task && bar.task.label_color) {
+            label.style.fill = bar.task.label_color;
+        }
         if (bar._labelContextMenu) {
             bar.group.removeEventListener('contextmenu', bar._labelContextMenu);
         }
         bar._labelContextMenu = (event) => {
             event.preventDefault();
             currentGanttLabel = label;
+            currentGanttTaskId = bar.task && bar.task.id;
             const rect = label.getBoundingClientRect();
             ganttLabelColorPicker.style.left = `${rect.left + window.scrollX}px`;
             ganttLabelColorPicker.style.top = `${rect.top + window.scrollY}px`;
@@ -1496,6 +1500,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             progress: parseFloat(t['Progress (%)']) || 0,
             dependencies: Array.isArray(t.Predecessors) ? t.Predecessors.join(',') : (t.Predecessors || ''),
             custom_class: customClass,
+            label_color: t.LabelColor,
             Type: t.Type
         });
 
@@ -3333,6 +3338,7 @@ toggleTaskCollapse(taskId);
 let currentColorCell = null;
 let selectedCellTextColor = cellTextColorPicker.value;
 let currentGanttLabel = null;
+let currentGanttTaskId = null;
 let selectedGanttLabelColor = ganttLabelColorPicker.value;
 taskMatrixTableBody.addEventListener('contextmenu', (event) => {
 const cell = event.target.closest('td');
@@ -3400,6 +3406,7 @@ ganttLabelColorPicker.addEventListener('blur', () => {
             ganttLabelColorPicker.style.display = 'none';
             applyGanttLabelColorBtn.style.display = 'none';
             currentGanttLabel = null;
+            currentGanttTaskId = null;
         }
     }, 200);
 });
@@ -3408,10 +3415,18 @@ applyGanttLabelColorBtn.addEventListener('click', () => {
     if (currentGanttLabel) {
         const newColor = selectedGanttLabelColor || ganttLabelColorPicker.value;
         currentGanttLabel.style.fill = newColor;
+        if (currentGanttTaskId) {
+            const task = window.allTaskData.find(t => String(t.TaskID) === String(currentGanttTaskId));
+            if (task) {
+                task.LabelColor = newColor;
+                saveProjectData();
+            }
+        }
     }
     ganttLabelColorPicker.style.display = 'none';
     applyGanttLabelColorBtn.style.display = 'none';
     currentGanttLabel = null;
+    currentGanttTaskId = null;
 });
 
 applyGanttLabelColorBtn.addEventListener('blur', () => {
@@ -3420,6 +3435,7 @@ applyGanttLabelColorBtn.addEventListener('blur', () => {
             ganttLabelColorPicker.style.display = 'none';
             applyGanttLabelColorBtn.style.display = 'none';
             currentGanttLabel = null;
+            currentGanttTaskId = null;
         }
     }, 200);
 });
