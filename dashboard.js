@@ -219,6 +219,7 @@ const commentsList = document.getElementById('commentsList');
 const newCommentText = document.getElementById('newCommentText');
 const newCommentAuthor = document.getElementById('newCommentAuthor');
 const addCommentBtn = document.getElementById('addCommentBtn');
+const cancelEditCommentBtn = document.getElementById('cancelEditCommentBtn');
 const ganttZoomIn = document.getElementById('ganttZoomIn');
 const ganttZoomOut = document.getElementById('ganttZoomOut');
 const openGanttModalBtn = document.getElementById('openGanttModalBtn');
@@ -2395,31 +2396,39 @@ if (modalTitle) modalTitle.textContent = 'Add New Item';
 }
 
 let currentCommentTaskId = null;
+let editingCommentIndex = null;
 
 function showCommentsModal(taskId) {
-currentCommentTaskId = taskId;
-const task = window.allTaskData.find(t => t.TaskID === taskId);
-const comments = task && Array.isArray(task.Comments) ? task.Comments : [];
-if (comments.length > 0) {
-commentsList.innerHTML = comments.map((c, idx) => {
-const textWithMentions = c.text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
-return `
+  currentCommentTaskId = taskId;
+  editingCommentIndex = null;
+  const task = window.allTaskData.find(t => t.TaskID === taskId);
+  const comments = task && Array.isArray(task.Comments) ? task.Comments : [];
+  if (comments.length > 0) {
+    commentsList.innerHTML = comments.map((c, idx) => {
+      const textWithMentions = c.text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+      return `
 <div class="comment-entry ${c.acknowledged ? 'acknowledged' : ''}" data-comment-index="${idx}" style="margin-bottom:8px; position:relative;">
 <strong>${c.author}</strong> (${new Date(c.timestamp).toLocaleString()}):<br>${textWithMentions}
+<span class="material-icons edit-comment" data-comment-index="${idx}">edit</span>
 <span class="material-icons ack-comment" data-comment-index="${idx}">check_circle</span>
 <span class="material-icons delete-comment" data-comment-index="${idx}">delete</span>
 </div>`;
-}).join('');
-} else {
-commentsList.innerHTML = '<p>No comments yet.</p>';
-}
-newCommentText.value = '';
-newCommentAuthor.value = '';
-commentsModal.classList.add('show');
+    }).join('');
+  } else {
+    commentsList.innerHTML = '<p>No comments yet.</p>';
+  }
+  newCommentText.value = '';
+  newCommentAuthor.value = '';
+  addCommentBtn.textContent = 'Add Comment';
+  cancelEditCommentBtn.classList.add('hidden');
+  commentsModal.classList.add('show');
 }
 
 function hideCommentsModal() {
-commentsModal.classList.remove('show');
+  commentsModal.classList.remove('show');
+  editingCommentIndex = null;
+  addCommentBtn.textContent = 'Add Comment';
+  cancelEditCommentBtn.classList.add('hidden');
 }
 
 function showProjectInfoModal() {
@@ -3310,31 +3319,67 @@ closeCommentsBtn.addEventListener('click', hideCommentsModal);
 commentsModal.addEventListener('click', (e) => {
 if (e.target === commentsModal) hideCommentsModal();
 });
+cancelEditCommentBtn.addEventListener('click', () => {
+  editingCommentIndex = null;
+  newCommentText.value = '';
+  newCommentAuthor.value = '';
+  addCommentBtn.textContent = 'Add Comment';
+  cancelEditCommentBtn.classList.add('hidden');
+});
 addCommentBtn.addEventListener('click', async () => {
-if (!currentCommentTaskId) return;
-const task = window.allTaskData.find(t => t.TaskID === currentCommentTaskId);
-if (!task) return;
-const text = newCommentText.value.trim();
-if (!text) return;
-const author = newCommentAuthor.value.trim() || 'Anonymous';
-const mentionRegex = /@(\w+)/g;
-const mentions = Array.from(text.matchAll(mentionRegex)).map(m => m[1]);
-const knownNames = new Set(window.allTaskData.map(t => (t.Owner || '').toLowerCase()));
-const validMentions = mentions.filter(m => knownNames.has(m.toLowerCase()));
-const comment = { author, text, timestamp: new Date().toISOString(), acknowledged: false };
-if (validMentions.length > 0) {
-comment.mentions = validMentions;
-showToast(`Mentioned: ${validMentions.join(', ')}`);
-}
-if (!Array.isArray(task.Comments)) task.Comments = [];
-task.Comments.push(comment);
-showToast('Comment added');
-await saveProjectData();
-window.applyFilters();
-hideCommentsModal();
+  if (!currentCommentTaskId) return;
+  const task = window.allTaskData.find(t => t.TaskID === currentCommentTaskId);
+  if (!task) return;
+  const text = newCommentText.value.trim();
+  if (!text) return;
+  const author = newCommentAuthor.value.trim() || 'Anonymous';
+  const mentionRegex = /@(\w+)/g;
+  const mentions = Array.from(text.matchAll(mentionRegex)).map(m => m[1]);
+  const knownNames = new Set(window.allTaskData.map(t => (t.Owner || '').toLowerCase()));
+  const validMentions = mentions.filter(m => knownNames.has(m.toLowerCase()));
+
+  if (!Array.isArray(task.Comments)) task.Comments = [];
+
+  if (editingCommentIndex !== null && task.Comments[editingCommentIndex]) {
+    const existing = task.Comments[editingCommentIndex];
+    existing.text = text;
+    existing.author = author;
+    existing.timestamp = new Date().toISOString();
+    if (validMentions.length > 0) {
+      existing.mentions = validMentions;
+      showToast(`Mentioned: ${validMentions.join(', ')}`);
+    }
+    showToast('Comment updated');
+  } else {
+    const comment = { author, text, timestamp: new Date().toISOString(), acknowledged: false };
+    if (validMentions.length > 0) {
+      comment.mentions = validMentions;
+      showToast(`Mentioned: ${validMentions.join(', ')}`);
+    }
+    task.Comments.push(comment);
+    showToast('Comment added');
+  }
+
+  await saveProjectData();
+  window.applyFilters();
+  showCommentsModal(currentCommentTaskId);
 });
 
 commentsList.addEventListener('click', async (e) => {
+const edit = e.target.closest('.edit-comment');
+if (edit) {
+  const idx = parseInt(edit.dataset.commentIndex, 10);
+  const task = window.allTaskData.find(t => t.TaskID === currentCommentTaskId);
+  if (task && Array.isArray(task.Comments) && task.Comments[idx]) {
+    const c = task.Comments[idx];
+    newCommentText.value = c.text;
+    newCommentAuthor.value = c.author;
+    editingCommentIndex = idx;
+    addCommentBtn.textContent = 'Save Comment';
+    cancelEditCommentBtn.classList.remove('hidden');
+  }
+  return;
+}
 const del = e.target.closest('.delete-comment');
 if (del) {
 const idx = parseInt(del.dataset.commentIndex, 10);
