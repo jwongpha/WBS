@@ -16,6 +16,7 @@
             --drawer-rail-width: 5rem;
             --drawer-background: linear-gradient(180deg, #FFFFFF 0%, #E8F0FE 100%);
             --scrollbar-thumb-color: #C8C8C8;
+            --gantt-row-height: 30px;
 
             /* Status Colors - Gemini Palette */
             --status-done: #34A853; /* Green */
@@ -686,6 +687,27 @@ header {
             overflow-x: auto; /* enable horizontal scrolling */
             overflow-y: auto; /* allow vertical scrolling for long charts */
             cursor: grab; /* indicate chart can be dragged */
+        }
+
+        .gantt-wrapper {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            overflow: hidden;
+        }
+
+        .gantt-task-list {
+            border-right: 1px solid var(--divider-color);
+            overflow-y: auto;
+        }
+
+        .gantt-task-row {
+            height: var(--gantt-row-height);
+            display: flex;
+            align-items: center;
+            padding-left: 0.5rem;
+            font-size: 0.85em;
+            border-bottom: 1px solid var(--divider-color);
+            background: var(--card-background);
         }
 
         /* Allow pointer events on task bars in both modes so clicks work */
