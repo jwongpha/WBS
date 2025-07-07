@@ -1023,9 +1023,11 @@ const hasIssues = window.allTaskData.some(i => i.ParentID === task.TaskID && i.T
 const issueIconHtml = hasIssues ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">bug_report</span>` : '';
 const delayIconHtml = isOverdue ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">schedule</span>` : '';
 const expandIcon = isParent ? `<span class="material-icons expand-toggle">${task._isCollapsed ? 'chevron_right' : 'expand_more'}</span>` : `<span style="width: 24px; display: inline-block;"></span>`;
+const typeIconHtml = getTypeIcon(task.Type);
 cell.innerHTML = `
 <div class="task-name-cell">
 ${expandIcon}
+${typeIconHtml}
 <span data-field-name="Task Name">${task['Task Name']}</span>
 ${issueIconHtml}
 ${delayIconHtml}
@@ -1059,10 +1061,11 @@ break;
 case 'Progress (%)':
     if (task.Type !== 'Vehicle Milestone') {
         const progress = parseInt(task['Progress (%)'] || 0);
+        const statusClass = task.Status ? `status-${task.Status.toLowerCase().replace(/ /g, '-')}` : '';
         cell.classList.add('progress-cell');
         cell.innerHTML = `
 <div class="progress-bar-container">
-    <div class="progress-bar" style="width: ${progress}%;"></div>
+    <div class="progress-bar ${statusClass}" style="width: ${progress}%;"></div>
     <span class="progress-text">${progress}%</span>
 </div>
 `;
