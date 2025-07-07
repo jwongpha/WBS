@@ -1002,10 +1002,10 @@ const level = parseInt(task.Level || 1);
 const indentation = (level - 1) * 25;
 
 // Handle content for each column based on data field name
-switch (columnName) {
-case 'TaskID':
-cell.textContent = task.TaskID;
-break;
+        switch (columnName) {
+        case 'TaskID':
+            cell.textContent = task.TaskID;
+            break;
 case 'Type Icon':
 cell.style.textAlign = 'center';
 cell.innerHTML = getTypeIcon(task.Type);
@@ -1096,11 +1096,21 @@ case 'Actions':
 cell.classList.add('action-cell');
 cell.innerHTML = `<span class="material-icons delete-btn" data-task-id="${task.TaskID}">delete</span>`;
 break;
-default:
+        default:
 // This case handles any other data field that might be explicitly added or found
 const val = task[columnName];
 cell.textContent = Array.isArray(val) ? val.join(", ") : (val !== undefined ? val : "");
 }
+        const colorMap = task.TextColors || {};
+        const textColor = colorMap[columnName];
+        if (textColor) {
+            if (columnName === 'Task Name') {
+                const span = cell.querySelector('span[data-field-name="Task Name"]');
+                if (span) span.style.color = textColor; else cell.style.color = textColor;
+            } else {
+                cell.style.color = textColor;
+            }
+        }
         row.appendChild(cell);
     });
     const checkbox = row.querySelector('.task-select');
@@ -1450,8 +1460,9 @@ function attachGanttLabelContextMenu(gantt) {
         if (!bar.group) return;
         const label = bar.group.querySelector('.bar-label');
         if (!label) return;
-        if (bar.task && bar.task.label_color) {
-            label.style.fill = bar.task.label_color;
+        if (bar.task) {
+            const color = bar.task.label_color || bar.task.LabelColor;
+            if (color) label.style.fill = color;
         }
         if (bar._labelContextMenu) {
             bar.group.removeEventListener('contextmenu', bar._labelContextMenu);
@@ -1517,7 +1528,8 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             dependencies: Array.isArray(t.Predecessors) ? t.Predecessors.join(',') : (t.Predecessors || ''),
             custom_class: customClass,
             Type: t.Type,
-            progress_detail: t['Progress Detail'] || ''
+            progress_detail: t['Progress Detail'] || '',
+            label_color: t.LabelColor || (t.TextColors && t.TextColors['Task Name'])
         });
 
         if (milestoneMap.has(t.TaskID)) {
@@ -2031,7 +2043,7 @@ return;
 }
 
   const dataToExport = window.allTaskData.map(task => {
-    const { _isCollapsed, Type, 'Progress Detail': progressDetail, ...exportedTask } = task;
+    const { _isCollapsed, Type, TextColors, LabelColor, 'Progress Detail': progressDetail, ...exportedTask } = task;
     exportedTask.DETAILS = progressDetail || '';
     return exportedTask;
   });
@@ -3390,16 +3402,28 @@ currentColorCell = null;
 });
 
 applyCellTextColorBtn.addEventListener('click', () => {
-if (currentColorCell) {
-const newColor = selectedCellTextColor || cellTextColorPicker.value;
-currentColorCell.style.color = newColor;
-if (activeQuill && activeQuillCell === currentColorCell) {
-activeQuill.root.style.color = newColor;
-}
-}
-cellTextColorPicker.style.display = 'none';
-applyCellTextColorBtn.style.display = 'none';
-currentColorCell = null;
+    if (currentColorCell) {
+        const newColor = selectedCellTextColor || cellTextColorPicker.value;
+        currentColorCell.style.color = newColor;
+        if (activeQuill && activeQuillCell === currentColorCell) {
+            activeQuill.root.style.color = newColor;
+        }
+        const row = currentColorCell.closest('tr');
+        const fieldName = currentColorCell.dataset.fieldName;
+        if (row && fieldName) {
+            const taskId = row.dataset.taskId;
+            const task = window.allTaskData.find(t => String(t.TaskID) === String(taskId));
+            if (task) {
+                if (!task.TextColors) task.TextColors = {};
+                task.TextColors[fieldName] = newColor;
+                if (fieldName === 'Task Name') task.LabelColor = newColor;
+                saveProjectData();
+            }
+        }
+    }
+    cellTextColorPicker.style.display = 'none';
+    applyCellTextColorBtn.style.display = 'none';
+    currentColorCell = null;
 });
 
 applyCellTextColorBtn.addEventListener('blur', () => {
@@ -3435,7 +3459,14 @@ applyGanttLabelColorBtn.addEventListener('click', () => {
             const task = window.allTaskData.find(t => String(t.TaskID) === String(currentGanttTaskId));
             if (task) {
                 task.LabelColor = newColor;
+                if (!task.TextColors) task.TextColors = {};
+                task.TextColors['Task Name'] = newColor;
                 saveProjectData();
+                const row = document.querySelector(`tr[data-task-id="${task.TaskID}"]`);
+                if (row) {
+                    const cell = row.querySelector('td[data-field-name="Task Name"]');
+                    if (cell) cell.style.color = newColor;
+                }
             }
         }
     }
