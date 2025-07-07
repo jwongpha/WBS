@@ -2128,9 +2128,15 @@ async function exportGanttToPdf() {
   const code = generateMermaidGanttCode(window.allTaskData);
 
   try {
-    const { svg } = await mermaid.render('gantt-export', code);
+    const tmpContainer = document.createElement('div');
+    tmpContainer.style.display = 'none';
+    document.body.appendChild(tmpContainer);
+
+    const { svg } = await mermaid.render('gantt-export', code, tmpContainer);
     const parser = new DOMParser();
     const svgElement = parser.parseFromString(svg, 'image/svg+xml').documentElement;
+
+    tmpContainer.remove();
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     await svg2pdf(svgElement, doc, { xOffset: 0, yOffset: 0 });
