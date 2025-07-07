@@ -882,9 +882,16 @@ header {
 
         .progress-bar {
             height: 100%;
-            background-color: var(--status-in-progress);
             border-radius: 4px;
         }
+
+        .progress-bar.status-done { background-color: var(--status-done); }
+        .progress-bar.status-in-progress { background-color: var(--status-in-progress); }
+        .progress-bar.status-on-hold { background-color: var(--status-on-hold); }
+        .progress-bar.status-at-risk { background-color: var(--status-at-risk); }
+        .progress-bar.status-open { background-color: var(--status-open); }
+        .progress-bar.status-resolved { background-color: var(--status-resolved); }
+        .progress-bar.status-not-started { background-color: var(--status-not-started); }
         
         .progress-text {
             position: absolute;
