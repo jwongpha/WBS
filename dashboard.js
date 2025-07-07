@@ -247,6 +247,8 @@ const tableTextColorPicker = document.getElementById('tableTextColorPicker');
 const applyTextColorBtn = document.getElementById('applyTextColorBtn');
 const cellTextColorPicker = document.getElementById('cellTextColorPicker');
 const applyCellTextColorBtn = document.getElementById('applyCellTextColorBtn');
+const ganttLabelColorPicker = document.getElementById('ganttLabelColorPicker');
+const applyGanttLabelColorBtn = document.getElementById('applyGanttLabelColorBtn');
 const itemTypeSelect = document.getElementById('itemType'); // Get the itemType select element
 const itemSituationField = document.getElementById('itemSituationField'); // Get the situation form field
 const itemSituationSelect = document.getElementById('itemSituation'); // Get the situation select element
@@ -1426,6 +1428,38 @@ function attachGanttClick(gantt) {
     });
 }
 
+function attachGanttLabelContextMenu(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group) return;
+        const label = bar.group.querySelector('.bar-label');
+        if (!label) return;
+        if (bar.task && bar.task.label_color) {
+            label.style.fill = bar.task.label_color;
+        }
+        if (bar._labelContextMenu) {
+            bar.group.removeEventListener('contextmenu', bar._labelContextMenu);
+        }
+        bar._labelContextMenu = (event) => {
+            event.preventDefault();
+            currentGanttLabel = label;
+            currentGanttTaskId = bar.task && bar.task.id;
+            const rect = label.getBoundingClientRect();
+            ganttLabelColorPicker.style.left = `${rect.left + window.scrollX}px`;
+            ganttLabelColorPicker.style.top = `${rect.top + window.scrollY}px`;
+            const computedColor = label.getAttribute('fill') || getComputedStyle(label).fill;
+            ganttLabelColorPicker.value = rgbToHex(computedColor);
+            selectedGanttLabelColor = ganttLabelColorPicker.value;
+            ganttLabelColorPicker.style.display = 'block';
+            applyGanttLabelColorBtn.style.left = `${rect.left + window.scrollX + ganttLabelColorPicker.offsetWidth}px`;
+            applyGanttLabelColorBtn.style.top = `${rect.top + window.scrollY}px`;
+            applyGanttLabelColorBtn.style.display = 'block';
+            ganttLabelColorPicker.focus();
+        };
+        bar.group.addEventListener('contextmenu', bar._labelContextMenu);
+    });
+}
+
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const container = document.getElementById(elementId);
     if (!container) return null;
@@ -1466,6 +1500,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
             progress: parseFloat(t['Progress (%)']) || 0,
             dependencies: Array.isArray(t.Predecessors) ? t.Predecessors.join(',') : (t.Predecessors || ''),
             custom_class: customClass,
+            label_color: t.LabelColor,
             Type: t.Type
         });
 
@@ -1501,6 +1536,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     addMilestoneMarkers(gantt);
     attachGanttDoubleClick(gantt);
     attachGanttClick(gantt);
+    attachGanttLabelContextMenu(gantt);
     charts[elementId] = gantt;
     const idx = ganttViewModes.indexOf(viewMode);
     currentGanttView = idx !== -1 ? idx : ganttViewModes.indexOf('Day');
@@ -1532,6 +1568,7 @@ function zoomGantt(direction) {
     addMilestoneMarkers(chart);
     attachGanttDoubleClick(chart);
     attachGanttClick(chart);
+    attachGanttLabelContextMenu(chart);
     if (ganttViewModeSelect) {
         ganttViewModeSelect.value = ganttViewModes[currentGanttView];
     }
@@ -1562,6 +1599,7 @@ function changeGanttView(mode) {
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
         attachGanttClick(chart);
+        attachGanttLabelContextMenu(chart);
 
         // 3. AFTER re-rendering, scroll back to the preserved center date.
         // A timeout ensures the DOM has fully updated from the re-render.
@@ -1582,6 +1620,7 @@ function changeGanttModalView(mode) {
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
         attachGanttClick(chart);
+        attachGanttLabelContextMenu(chart);
     }
 }
 
@@ -2632,6 +2671,7 @@ function showGanttModal() {
         addMilestoneMarkers(charts.ganttModal);
         attachGanttDoubleClick(charts.ganttModal);
         attachGanttClick(charts.ganttModal);
+        attachGanttLabelContextMenu(charts.ganttModal);
     }
     if (ganttViewModeModalSelect) {
         ganttViewModeModalSelect.value = ganttViewModes[currentGanttView];
@@ -3297,6 +3337,9 @@ toggleTaskCollapse(taskId);
 
 let currentColorCell = null;
 let selectedCellTextColor = cellTextColorPicker.value;
+let currentGanttLabel = null;
+let currentGanttTaskId = null;
+let selectedGanttLabelColor = ganttLabelColorPicker.value;
 taskMatrixTableBody.addEventListener('contextmenu', (event) => {
 const cell = event.target.closest('td');
 if (cell) {
@@ -3351,6 +3394,50 @@ applyCellTextColorBtn.style.display = 'none';
 currentColorCell = null;
 }
 }, 200);
+});
+
+ganttLabelColorPicker.addEventListener('input', () => {
+    selectedGanttLabelColor = ganttLabelColorPicker.value;
+});
+
+ganttLabelColorPicker.addEventListener('blur', () => {
+    setTimeout(() => {
+        if (document.activeElement !== applyGanttLabelColorBtn) {
+            ganttLabelColorPicker.style.display = 'none';
+            applyGanttLabelColorBtn.style.display = 'none';
+            currentGanttLabel = null;
+            currentGanttTaskId = null;
+        }
+    }, 200);
+});
+
+applyGanttLabelColorBtn.addEventListener('click', () => {
+    if (currentGanttLabel) {
+        const newColor = selectedGanttLabelColor || ganttLabelColorPicker.value;
+        currentGanttLabel.style.fill = newColor;
+        if (currentGanttTaskId) {
+            const task = window.allTaskData.find(t => String(t.TaskID) === String(currentGanttTaskId));
+            if (task) {
+                task.LabelColor = newColor;
+                saveProjectData();
+            }
+        }
+    }
+    ganttLabelColorPicker.style.display = 'none';
+    applyGanttLabelColorBtn.style.display = 'none';
+    currentGanttLabel = null;
+    currentGanttTaskId = null;
+});
+
+applyGanttLabelColorBtn.addEventListener('blur', () => {
+    setTimeout(() => {
+        if (document.activeElement !== ganttLabelColorPicker) {
+            ganttLabelColorPicker.style.display = 'none';
+            applyGanttLabelColorBtn.style.display = 'none';
+            currentGanttLabel = null;
+            currentGanttTaskId = null;
+        }
+    }, 200);
 });
 
 taskMatrixTableBody.addEventListener('dblclick', (event) => {
@@ -3683,12 +3770,14 @@ baselineToggle.addEventListener('change', () => {
             addMilestoneMarkers(charts.gantt);
             attachGanttDoubleClick(charts.gantt);
             attachGanttClick(charts.gantt);
+            attachGanttLabelContextMenu(charts.gantt);
         }
         if (charts.ganttModal) {
             addBaselineBars(charts.ganttModal);
             addMilestoneMarkers(charts.ganttModal);
             attachGanttDoubleClick(charts.ganttModal);
             attachGanttClick(charts.ganttModal);
+            attachGanttLabelContextMenu(charts.ganttModal);
         }
     });
 
@@ -3702,12 +3791,14 @@ if (toggleBaselineBtn) {
             addMilestoneMarkers(charts.gantt);
             attachGanttDoubleClick(charts.gantt);
             attachGanttClick(charts.gantt);
+            attachGanttLabelContextMenu(charts.gantt);
         }
         if (charts.ganttModal) {
             addBaselineBars(charts.ganttModal);
             addMilestoneMarkers(charts.ganttModal);
             attachGanttDoubleClick(charts.ganttModal);
             attachGanttClick(charts.ganttModal);
+            attachGanttLabelContextMenu(charts.ganttModal);
         }
     });
 }
