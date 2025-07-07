@@ -1386,6 +1386,33 @@ function attachGanttDoubleClick(gantt) {
     });
 }
 
+function highlightTableRowById(taskId) {
+    if (!taskMatrixTableBody) return;
+    const rows = taskMatrixTableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        if (row.dataset.taskId === String(taskId)) {
+            row.classList.add('highlight-row');
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            row.classList.remove('highlight-row');
+        }
+    });
+}
+
+function attachGanttClick(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group || !bar.task) return;
+        const id = bar.task.id;
+        if (!id || String(id).includes('milestones')) return;
+        if (bar._clickHandler) {
+            bar.group.removeEventListener('click', bar._clickHandler);
+        }
+        bar._clickHandler = () => highlightTableRowById(id);
+        bar.group.addEventListener('click', bar._clickHandler);
+    });
+}
+
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const container = document.getElementById(elementId);
     if (!container) return null;
@@ -1460,6 +1487,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     addBaselineBars(gantt);
     addMilestoneMarkers(gantt);
     attachGanttDoubleClick(gantt);
+    attachGanttClick(gantt);
     charts[elementId] = gantt;
     const idx = ganttViewModes.indexOf(viewMode);
     currentGanttView = idx !== -1 ? idx : ganttViewModes.indexOf('Day');
@@ -1490,6 +1518,7 @@ function zoomGantt(direction) {
     addBaselineBars(chart);
     addMilestoneMarkers(chart);
     attachGanttDoubleClick(chart);
+    attachGanttClick(chart);
     if (ganttViewModeSelect) {
         ganttViewModeSelect.value = ganttViewModes[currentGanttView];
     }
@@ -1519,6 +1548,7 @@ function changeGanttView(mode) {
         addBaselineBars(chart);
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
+        attachGanttClick(chart);
 
         // 3. AFTER re-rendering, scroll back to the preserved center date.
         // A timeout ensures the DOM has fully updated from the re-render.
@@ -1538,6 +1568,7 @@ function changeGanttModalView(mode) {
         addBaselineBars(chart);
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
+        attachGanttClick(chart);
     }
 }
 
@@ -2552,6 +2583,7 @@ function showGanttModal() {
         addBaselineBars(charts.ganttModal);
         addMilestoneMarkers(charts.ganttModal);
         attachGanttDoubleClick(charts.ganttModal);
+        attachGanttClick(charts.ganttModal);
     }
     if (ganttViewModeModalSelect) {
         ganttViewModeModalSelect.value = ganttViewModes[currentGanttView];
@@ -3511,17 +3543,19 @@ baselineToggle.addEventListener('change', () => {
     baselineVisible = baselineToggle.checked;
     saveBaselineVisibilityState();
     updateBaselineButton();
-    if (charts.gantt) {
-        addBaselineBars(charts.gantt);
-        addMilestoneMarkers(charts.gantt);
-        attachGanttDoubleClick(charts.gantt);
-    }
-    if (charts.ganttModal) {
-        addBaselineBars(charts.ganttModal);
-        addMilestoneMarkers(charts.ganttModal);
-        attachGanttDoubleClick(charts.ganttModal);
-    }
-});
+        if (charts.gantt) {
+            addBaselineBars(charts.gantt);
+            addMilestoneMarkers(charts.gantt);
+            attachGanttDoubleClick(charts.gantt);
+            attachGanttClick(charts.gantt);
+        }
+        if (charts.ganttModal) {
+            addBaselineBars(charts.ganttModal);
+            addMilestoneMarkers(charts.ganttModal);
+            attachGanttDoubleClick(charts.ganttModal);
+            attachGanttClick(charts.ganttModal);
+        }
+    });
 
 if (toggleBaselineBtn) {
     toggleBaselineBtn.addEventListener('click', () => {
@@ -3532,11 +3566,13 @@ if (toggleBaselineBtn) {
             addBaselineBars(charts.gantt);
             addMilestoneMarkers(charts.gantt);
             attachGanttDoubleClick(charts.gantt);
+            attachGanttClick(charts.gantt);
         }
         if (charts.ganttModal) {
             addBaselineBars(charts.ganttModal);
             addMilestoneMarkers(charts.ganttModal);
             attachGanttDoubleClick(charts.ganttModal);
+            attachGanttClick(charts.ganttModal);
         }
     });
 }

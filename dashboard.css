@@ -943,6 +943,9 @@ header {
         .overdue-row {
             background-color: rgba(242, 160, 161, 0.3);
         }
+        .highlight-row {
+            background-color: rgba(255, 244, 138, 0.4);
+        }
         .situation-sunny { color: var(--situation-sunny); }
         .situation-cloudy { color: var(--situation-cloudy); }
         .situation-thunderstorm { color: var(--situation-thunderstorm); }
