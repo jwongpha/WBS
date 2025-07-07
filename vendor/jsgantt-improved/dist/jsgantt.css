@@ -459,7 +459,9 @@ span.gfoldercollapse {
 .gDepSS,
 .gDepSF,
 .gDepFF {
-  border-color: #ff0000;
+  border-color: #888888;
+  border-style: dashed;
+  border-width: 1px;
 }
 
 .gDepFSArw,
@@ -468,7 +470,7 @@ span.gfoldercollapse {
   width: 0px;
   height: 0px;
   border-bottom: 4px solid transparent;
-  border-left: 4px solid #ff0000;
+  border-left: 4px solid #888888;
   border-top: 4px solid transparent;
   border-right: 4px solid transparent;
 }
@@ -481,7 +483,7 @@ span.gfoldercollapse {
   border-bottom: 4px solid transparent;
   border-left: 4px solid transparent;
   border-top: 4px solid transparent;
-  border-right: 4px solid #ff0000;
+  border-right: 4px solid #888888;
 }
 
 .gCurDate {
