@@ -688,12 +688,12 @@ header {
             cursor: grab; /* indicate chart can be dragged */
         }
 
-        /* Disable pointer events on task bars unless in edit mode */
+        /* Allow pointer events on task bars in both modes so clicks work */
 
         .gantt-container:not(.edit-mode) .bar-wrapper,
         .gantt-container:not(.edit-mode) .bar,
         .gantt-container:not(.edit-mode) .handle {
-            pointer-events: none;
+            pointer-events: auto;
         }
 
         /* When editing, allow dragging tasks but still pan by clicking empty space */
