@@ -934,56 +934,203 @@ number: parseInt(match[2], 10)
 
 
 function populateTaskMatrix(tasks) {
-    const wrapper = document.querySelector('.gantt-wrapper');
-    if (!wrapper) return;
-    const list = wrapper.querySelector('.gantt-task-list');
-    if (!list) return;
-    list.innerHTML = '';
+// Clear existing table head and body
+taskMatrixTable.querySelector('thead tr').innerHTML = '';
+taskMatrixTableBody.innerHTML = '';
 
-    const visibleTasks = getVisibleTasks(tasks);
+const selectTh = document.createElement('th');
+selectTh.className = 'select-col';
+selectTh.innerHTML = 'SELECT <input type="checkbox" id="selectAllTasks">';
+taskMatrixTableHeadRow.appendChild(selectTh);
 
-    visibleTasks.forEach(task => {
-        const row = document.createElement('div');
-        const level = parseInt(task.Level || 1);
-        row.className = 'gantt-task-row' + (task._isCollapsed ? ' collapsed' : '');
-        row.dataset.taskId = task.TaskID;
-        row.dataset.level = level;
+const visibleTasks = getVisibleTasks(tasks);
+// No longer need parentIds set here, as root logic is more robust
 
-        const endDate = parseDateLocal(task['End Date']);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const isOverdue = endDate < today && task.Status !== 'Done';
-        if (isOverdue) row.classList.add('overdue-row');
-        if (level === 1) row.classList.add('root-task-row');
-        if (task.Type === 'MilestoneRow') row.classList.add('milestone-row');
+// Populate table header based on current column order
+window.columnOrder.forEach(columnName => {
+const th = document.createElement('th');
+th.setAttribute('data-field-name', columnName);
+th.setAttribute('draggable', 'true'); // Make headers draggable
+th.textContent = COLUMN_DISPLAY_NAMES[columnName] || columnName;
 
-        const indentation = (level - 1) * 25;
-        const isParent = window.allTaskData.some(t => t.ParentID === task.TaskID);
-        const hasIssues = window.allTaskData.some(i => i.ParentID === task.TaskID && i.Type === 'Issue');
-        const expandIcon = isParent ? `<span class="material-icons expand-toggle">${task._isCollapsed ? 'chevron_right' : 'expand_more'}</span>` : '<span style="width:24px; display:inline-block;"></span>';
-        const issueIconHtml = hasIssues ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">bug_report</span>` : '';
-        const delayIconHtml = isOverdue ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">schedule</span>` : '';
+// Add specific classes for progress cell if applicable
+if (columnName === 'Progress (%)') {
+th.classList.add('progress-cell');
+}
+taskMatrixTableHeadRow.appendChild(th);
+th.addEventListener("click", () => {
+if (window.tableSortState.column === columnName) {
+window.tableSortState.ascending = !window.tableSortState.ascending;
+} else {
+window.tableSortState.column = columnName;
+window.tableSortState.ascending = true;
+}
+window.applyFilters();
+});
+});
 
-        row.innerHTML = `
-            <div class="task-name-cell" style="padding-left: ${indentation}px;">
-                ${expandIcon}
-                ${getTypeIcon(task.Type)}
-                <span data-field-name="Task Name">${task['Task Name']}</span>
-                ${issueIconHtml}${delayIconHtml}
-            </div>`;
+// Populate table body
+visibleTasks.forEach(task => {
+const row = document.createElement('tr');
+const level = parseInt(task.Level || 1);
+row.className = 'task-row' + (task._isCollapsed ? ' collapsed' : '');
+row.dataset.taskId = task.TaskID;
+row.dataset.level = level;
+const endDate = parseDateLocal(task['End Date']);
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const isOverdue = endDate < today && task.Status !== 'Done';
+if (isOverdue) {
+row.classList.add('overdue-row');
+}
+if (level === 1) {
+row.classList.add('root-task-row');
+}
+if (task.ParentID) {
+row.dataset.parentId = task.ParentID;
+}
 
-        list.appendChild(row);
+const selectCell = document.createElement('td');
+selectCell.className = 'select-col';
+selectCell.innerHTML = `<input type="checkbox" class="task-select" data-task-id="${task.TaskID}">`;
+row.appendChild(selectCell);
+
+window.columnOrder.forEach(columnName => {
+const cell = document.createElement('td');
+cell.setAttribute('data-field-name', columnName); // Set data-field-name on td for editing
+
+const level = parseInt(task.Level || 1);
+const indentation = (level - 1) * 25;
+
+// Handle content for each column based on data field name
+        switch (columnName) {
+        case 'TaskID':
+            cell.textContent = task.TaskID;
+            break;
+case 'Type Icon':
+cell.style.textAlign = 'center';
+cell.innerHTML = getTypeIcon(task.Type);
+break;
+case 'Task Name':
+// Check for parent in *allTaskData* for expand/collapse toggle
+const isParent = window.allTaskData.some(t => t.ParentID === task.TaskID);
+const hasIssues = window.allTaskData.some(i => i.ParentID === task.TaskID && i.Type === 'Issue');
+const issueIconHtml = hasIssues ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">bug_report</span>` : '';
+const delayIconHtml = isOverdue ? `<span class="material-icons" style="color: var(--status-at-risk); font-size: 1em; vertical-align: middle;">schedule</span>` : '';
+const expandIcon = isParent ? `<span class="material-icons expand-toggle">${task._isCollapsed ? 'chevron_right' : 'expand_more'}</span>` : `<span style="width: 24px; display: inline-block;"></span>`;
+cell.innerHTML = `
+<div class="task-name-cell" style="padding-left: ${indentation}px;">
+${expandIcon}
+<span data-field-name="Task Name">${task['Task Name']}</span>
+${issueIconHtml}
+${delayIconHtml}
+</div>
+`;
+break;
+case 'Owner':
+cell.textContent = task.Owner || 'N/A';
+break;
+case 'Sub Owner':
+cell.textContent = task['Sub Owner'] || 'N/A';
+break;
+case 'Priority':
+cell.textContent = task.Priority || 'N/A';
+break;
+case 'Baseline Start Date':
+cell.textContent = task['Baseline Start Date'] || 'N/A';
+break;
+case 'Start Date':
+cell.textContent = task['Start Date'] || 'N/A';
+break;
+case 'End Date':
+cell.textContent = task['End Date'] || 'N/A';
+break;
+case 'Overdue':
+cell.textContent = isOverdue ? 'Yes' : 'No';
+break;
+case 'Baseline End Date':
+cell.textContent = task['Baseline End Date'] || 'N/A';
+break;
+case 'Progress (%)':
+    if (task.Type !== 'Vehicle Milestone') {
+        const progress = parseInt(task['Progress (%)'] || 0);
+        cell.classList.add('progress-cell');
+        cell.innerHTML = `
+<div class="progress-bar-container">
+    <div class="progress-bar" style="width: ${progress}%;"></div>
+    <span class="progress-text">${progress}%</span>
+</div>
+`;
+    } else {
+        cell.textContent = ''; // Milestones do not have progress bar
+    }
+    break;
+case 'Status':
+const status = task.Status || "";
+const statusClass = status ? `status-${status.toLowerCase().replace(/ /g, '-')}` : '';
+cell.innerHTML = status ? `<span class="status-badge ${statusClass}">${status}</span>` : '';
+break;
+case 'Situation':
+cell.style.textAlign = 'center';
+cell.innerHTML = getSituationIcon(task.Situation);
+break;
+case 'Comments':
+const comments = Array.isArray(task.Comments) ? task.Comments : [];
+const unack = comments.filter(c => !c.acknowledged).length;
+cell.classList.add('action-cell');
+cell.innerHTML = `
+<span class="material-icons comment-icon" data-task-id="${task.TaskID}" ${unack > 0 ? 'style="color: var(--primary-color);"' : ''}>comment</span>
+${unack > 0 ? `<span class="comment-badge">${unack}</span>` : ''}
+`;
+break;
+case 'Is Milestone?':
+cell.textContent = task['Is Milestone?'] || 'No';
+break;
+case 'Progress Detail':
+cell.textContent = task['Progress Detail'] || '';
+break;
+case 'Description':
+cell.classList.add('editable-cell');
+cell.innerHTML = task['Description'] || '';
+break;
+case 'Actions':
+cell.classList.add('action-cell');
+cell.innerHTML = `<span class="material-icons delete-btn" data-task-id="${task.TaskID}">delete</span>`;
+break;
+        default:
+// This case handles any other data field that might be explicitly added or found
+const val = task[columnName];
+cell.textContent = Array.isArray(val) ? val.join(", ") : (val !== undefined ? val : "");
+}
+        const colorMap = task.TextColors || {};
+        const textColor = colorMap[columnName];
+        if (textColor) {
+            if (columnName === 'Task Name') {
+                const span = cell.querySelector('span[data-field-name="Task Name"]');
+                if (span) span.style.color = textColor; else cell.style.color = textColor;
+            } else {
+                cell.style.color = textColor;
+            }
+        }
+        row.appendChild(cell);
     });
-
-    const scrollContainer = wrapper.parentElement;
-    if (scrollContainer) {
-        scrollContainer.addEventListener('scroll', () => {
-            list.scrollTop = scrollContainer.scrollTop;
-        });
-        list.addEventListener('scroll', () => {
-            scrollContainer.scrollTop = list.scrollTop;
+    const checkbox = row.querySelector('.task-select');
+    if (checkbox) {
+        checkbox.addEventListener('change', updateSelectedActionsVisibility);
+    }
+    taskMatrixTableBody.appendChild(row);
+});
+setTableFontSize(currentTableFontSize);
+updateSortIndicators();
+const selectAllCheckbox = document.getElementById('selectAllTasks');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            const checked = selectAllCheckbox.checked;
+            taskMatrixTableBody.querySelectorAll('.task-select').forEach(cb => cb.checked = checked);
+            updateSelectedActionsVisibility();
         });
     }
+    updateSelectedActionsVisibility();
 }
 
 // Function to apply current column visibility to the table
@@ -1275,17 +1422,20 @@ function attachGanttDoubleClick(gantt) {
 }
 
 function highlightTableRowById(taskId) {
-    const list = document.querySelector('.gantt-task-list');
-    if (!list) return;
-    const rows = list.querySelectorAll('.gantt-task-row');
+    if (!taskMatrixTableBody) return;
+    const rows = taskMatrixTableBody.querySelectorAll('tr');
     rows.forEach(row => {
+        const cb = row.querySelector('.task-select');
         if (row.dataset.taskId === String(taskId)) {
             row.classList.add('highlight-row');
+            if (cb) cb.checked = true;
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
             row.classList.remove('highlight-row');
+            if (cb) cb.checked = false;
         }
     });
+    updateSelectedActionsVisibility();
 }
 
 function attachGanttClick(gantt) {
