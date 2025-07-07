@@ -1396,13 +1396,17 @@ function highlightTableRowById(taskId) {
     if (!taskMatrixTableBody) return;
     const rows = taskMatrixTableBody.querySelectorAll('tr');
     rows.forEach(row => {
+        const cb = row.querySelector('.task-select');
         if (row.dataset.taskId === String(taskId)) {
             row.classList.add('highlight-row');
+            if (cb) cb.checked = true;
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
             row.classList.remove('highlight-row');
+            if (cb) cb.checked = false;
         }
     });
+    updateSelectedActionsVisibility();
 }
 
 function attachGanttClick(gantt) {
