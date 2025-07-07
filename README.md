@@ -75,6 +75,9 @@ The **Show Baselines** checkbox lets you toggle visibility of dashed baseline
 bars for each task. The setting is saved so your preference persists when you
 reopen the dashboard.
 
+Click any bar in the Gantt chart to highlight the corresponding row in the task
+table.
+
 ### Kanban Board
 
 Use the **Switch View** button to display tasks on a Kanban board. Column
