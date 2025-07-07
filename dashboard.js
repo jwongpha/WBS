@@ -1508,6 +1508,13 @@ function positionGanttLabelsLeft(gantt) {
     });
 }
 
+// Update CSS row height variable to match the Gantt chart's row height
+function updateGanttRowHeight(gantt) {
+    if (!gantt || !gantt.options) return;
+    const height = (gantt.options.bar_height || 0) + (gantt.options.padding || 0);
+    document.documentElement.style.setProperty('--gantt-row-height', `${height}px`);
+}
+
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const container = document.getElementById(elementId);
     if (!container) return null;
@@ -1581,6 +1588,7 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     const gantt = initFrappeGantt(container, tasks, viewMode);
     gantt.milestoneMap = milestoneMap;
     gantt.milestoneStartKey = startKey;
+    updateGanttRowHeight(gantt);
     addBaselineBars(gantt);
     addMilestoneMarkers(gantt);
     attachGanttDoubleClick(gantt);
@@ -1637,6 +1645,7 @@ function zoomGantt(direction) {
         currentGanttView--;
     }
     chart.change_view_mode(ganttViewModes[currentGanttView]);
+    updateGanttRowHeight(chart);
     addBaselineBars(chart);
     addMilestoneMarkers(chart);
     attachGanttDoubleClick(chart);
@@ -1669,6 +1678,7 @@ function changeGanttView(mode) {
         // 2. Change the view mode, which re-renders the chart and resets the scroll.
         currentGanttView = idx;
         chart.change_view_mode(mode);
+        updateGanttRowHeight(chart);
         addBaselineBars(chart);
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
@@ -1691,6 +1701,7 @@ function changeGanttModalView(mode) {
     const idx = ganttViewModes.indexOf(mode);
     if (chart && idx !== -1) {
         chart.change_view_mode(mode);
+        updateGanttRowHeight(chart);
         addBaselineBars(chart);
         addMilestoneMarkers(chart);
         attachGanttDoubleClick(chart);
@@ -2784,6 +2795,7 @@ function showGanttModal() {
     charts.ganttModal = createGanttChart('ganttChartModal', visibleData, 'Task Name', 'Start Date', 'End Date');
     if (charts.ganttModal) {
         charts.ganttModal.change_view_mode(ganttViewModes[currentGanttView]);
+        updateGanttRowHeight(charts.ganttModal);
         addBaselineBars(charts.ganttModal);
         addMilestoneMarkers(charts.ganttModal);
         attachGanttDoubleClick(charts.ganttModal);

@@ -16,7 +16,8 @@
             --drawer-rail-width: 5rem;
             --drawer-background: linear-gradient(180deg, #FFFFFF 0%, #E8F0FE 100%);
             --scrollbar-thumb-color: #C8C8C8;
-            --gantt-row-height: 30px;
+            /* Default row height roughly matching Frappe Gantt */
+            --gantt-row-height: 48px;
 
             /* Status Colors - Gemini Palette */
             --status-done: #34A853; /* Green */
