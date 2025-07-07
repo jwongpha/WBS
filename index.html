@@ -480,6 +480,16 @@
                     <input type="text" id="successorFilter" class="modal-filter-input" placeholder="Filter tasks">
                     <select id="successorSelect" name="Successors" multiple></select>
                 </div>
+                <div id="itemCommentsSection" class="form-field hidden">
+                    <label>Comments</label>
+                    <div id="itemCommentsList" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+                    <textarea id="itemCommentText" placeholder="Add a comment" style="width: 100%; height: 80px;"></textarea>
+                    <input type="text" id="itemCommentAuthor" placeholder="Your name" style="width: 100%; margin-top: 5px;" />
+                    <div class="filter-buttons" style="margin-top: 10px;">
+                        <button id="itemAddCommentBtn" class="filter-btn">Add Comment</button>
+                        <button id="itemCancelEditCommentBtn" class="reset-btn hidden">Cancel</button>
+                    </div>
+                </div>
                 <div class="filter-buttons" style="margin-top: 20px;">
                     <button type="button" id="saveCloseBtn" class="filter-btn">Save &amp; Close</button>
                 </div>
@@ -514,6 +524,7 @@
             <input type="text" id="newCommentAuthor" placeholder="Your name" style="width: 100%; margin-top: 5px;" />
             <div class="filter-buttons" style="margin-top: 10px;">
                 <button id="addCommentBtn" class="filter-btn">Add Comment</button>
+                <button id="cancelEditCommentBtn" class="reset-btn hidden">Cancel</button>
             </div>
         </div>
     </div>
