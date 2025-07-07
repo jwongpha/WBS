@@ -1398,6 +1398,9 @@ function highlightTableRowById(taskId) {
     rows.forEach(row => {
         if (row.dataset.taskId === String(taskId)) {
             row.classList.add('highlight-row');
+            const cb = row.querySelector('.task-select');
+            if (cb) cb.checked = true;
+            updateSelectedActionsVisibility();
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
             row.classList.remove('highlight-row');
