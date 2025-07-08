@@ -83,6 +83,9 @@ The **Show Baselines** checkbox lets you toggle visibility of dashed baseline
 bars for each task. The setting is saved so your preference persists when you
 reopen the dashboard.
 
+Click the sidebar icon next to the baseline toggle to hide or show the task list
+column if you need more space for the timeline.
+
 Click any bar in the Gantt chart to highlight the corresponding row in the task
 table. The row's select checkbox is checked automatically and previous
 selections are cleared so only one row stays selected.

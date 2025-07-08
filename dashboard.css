@@ -725,6 +725,15 @@ header {
             min-width: 100%;
         }
 
+        /* Hide task list column when toggled */
+        .gantt-container.hide-task-list .gmainleft {
+            display: none;
+        }
+        .gantt-container.hide-task-list .gmainright {
+            flex: 1 1 auto;
+            width: 100%;
+        }
+
         .legend-container {
             display: flex;
             flex-wrap: wrap;
