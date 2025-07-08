@@ -1248,34 +1248,41 @@ th.innerHTML = label;
 }
 
 
-function initJsGantt(elementId, tasks, viewMode = 'Day') {
+function initFrappeGantt(elementId, tasks, viewMode = 'Day') {
     const container = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
     if (!container) return null;
     container.innerHTML = '';
 
-    const g = new JSGantt.GanttChart(container, viewMode.toLowerCase());
-    if (!g) return null;
-    tasks.forEach(t => {
-        g.AddTaskItemObject({
-            pID: t.id,
-            pName: t.name,
-            pStart: formatDateLocal(t.start),
-            pEnd: formatDateLocal(t.end),
-            pClass: t.custom_class || 'gtaskblue',
-            pLink: '',
-            pMile: t.is_milestone ? 1 : 0,
-            pRes: t.Owner || '',
-            pComp: Math.round(t.progress || 0),
-            pGroup: 0,
-            pParent: 0,
-            pOpen: 1,
-            pDepend: t.dependencies || '',
-            pCaption: ''
-        });
+    // Remove built-in padding so the chart range matches the task range exactly
+    if (window.Gantt && Gantt.VIEW_MODE) {
+        Object.values(Gantt.VIEW_MODE).forEach(m => m.padding = '0d');
+    }
+
+    const popup = (ctx) => {
+        ctx.set_title(ctx.task.name);
+        const fmt = d => {
+            const date = new Date(d);
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        };
+        const start = fmt(ctx.task._start);
+        const end = fmt(new Date(ctx.task._end.getTime() - 1000));
+        let details = `${start} - ${end}<br/>Progress: ${Math.floor(ctx.task.progress * 100) / 100}%`;
+        if (ctx.task.progress_detail) {
+            details += `<br/>DETAILS: ${ctx.task.progress_detail}`;
+        }
+        ctx.set_details(details);
+    };
+
+    return new Gantt(container, tasks, {
+        view_mode: viewMode,
+        on_date_change: onGanttDateChange,
+        on_click: () => {}, // disable single-click editing
+        infinite_padding: false,
+        readonly: false,
+        readonly_dates: false,
+        readonly_progress: false,
+        popup
     });
-    g.Draw();
-    if (g.DrawDependencies) g.DrawDependencies();
-    return g;
 }
 
 // Helper function to get CSS variable
@@ -1326,16 +1333,100 @@ function computeXForDate(gantt, date) {
     return diff * gantt.config.column_width;
 }
 
-function addBaselineBars() {
-    // Not implemented for jsGanttImproved
+function addBaselineBars(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        const existing = bar.group.querySelector('.bar-baseline');
+        if (existing) existing.remove();
+    });
+    if (!baselineVisible) return;
+    gantt.bars.forEach(bar => {
+        const task = bar.task;
+        if (!task || !task.baseline_start || !task.baseline_end) return;
+        const start = parseDateLocal(task.baseline_start);
+        const end = parseDateLocal(task.baseline_end);
+        if (isNaN(start) || isNaN(end)) return;
+        const x = computeXForDate(gantt, start);
+        const endX = computeXForDate(gantt, end);
+        const width = endX - x;
+        if (width <= 0) return;
+        const y = bar.y + bar.height + 4;
+        const height = bar.height / 3;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x);
+        rect.setAttribute('y', y);
+        rect.setAttribute('width', width);
+        rect.setAttribute('height', height);
+        rect.setAttribute('class', 'bar-baseline');
+        bar.group.appendChild(rect);
+    });
 }
 
 function addMilestoneMarkers(gantt) {
-    // Not implemented for jsGanttImproved
+    if (!gantt || !gantt.bars) return;
+    const milestoneMap = gantt.milestoneMap || new Map();
+    // Clear existing markers and reset bars/labels
+    gantt.bars.forEach(bar => {
+        bar.group.querySelectorAll('.milestone-marker').forEach(m => m.remove());
+        bar.group.querySelectorAll('.milestone-label').forEach(m => m.remove());
+        if (bar.$bar) bar.$bar.style.display = bar.task.Type === 'MilestoneRow' ? 'none' : '';
+        const label = bar.group.querySelector('.bar-label');
+        if (label && bar.task.Type !== 'MilestoneRow') {
+            label.style.display = '';
+            label.classList.remove('milestone-label');
+            label.removeAttribute('text-anchor');
+            bar.update_label_position && bar.update_label_position();
+        }
+    });
+
+    // Draw markers on dedicated milestone rows
+    gantt.bars.forEach(bar => {
+        const task = bar.task;
+        if (!task || task.Type !== 'MilestoneRow') return;
+        const milestones = milestoneMap.get(task.parentID) || [];
+        if (milestones.length === 0) return;
+        const y = bar.y + bar.height / 2;
+        const size = bar.height / 2;
+        milestones.forEach(ms => {
+            const date = parseDateLocal(ms.date);
+            if (isNaN(date)) return;
+            const x = computeXForDate(gantt, date);
+            const points = [
+                [x, y - size].join(','),
+                [x + size, y].join(','),
+                [x, y + size].join(','),
+                [x - size, y].join(',')
+            ].join(' ');
+            const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            diamond.setAttribute('points', points);
+            diamond.setAttribute('class', 'milestone-marker');
+            bar.group.appendChild(diamond);
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('class', 'milestone-label');
+            text.textContent = ms.name;
+            text.setAttribute('x', x + size + 4);
+            text.setAttribute('y', y + 4); // slight offset for vertical centering
+            bar.group.appendChild(text);
+        });
+        // Hide the default label for milestone rows
+        const label = bar.group.querySelector('.bar-label');
+        if (label) label.style.display = 'none';
+    });
 }
 
 function attachGanttDoubleClick(gantt) {
-    // Not implemented for jsGanttImproved
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group || !bar.task) return;
+        const id = bar.task.id;
+        if (!id || String(id).includes('milestones')) return;
+        if (bar._dblClickHandler) {
+            bar.group.removeEventListener('dblclick', bar._dblClickHandler);
+        }
+        bar._dblClickHandler = () => showAddItemModal(id);
+        bar.group.addEventListener('dblclick', bar._dblClickHandler);
+    });
 }
 
 function highlightTableRowById(taskId) {
@@ -1355,22 +1446,80 @@ function highlightTableRowById(taskId) {
     updateSelectedActionsVisibility();
 }
 
-function attachGanttClick() {
-    // Not implemented for jsGanttImproved
+function attachGanttClick(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group || !bar.task) return;
+        const id = bar.task.id;
+        if (!id || String(id).includes('milestones')) return;
+        if (bar._clickHandler) {
+            bar.group.removeEventListener('click', bar._clickHandler);
+        }
+        bar._clickHandler = () => {
+            if (!ganttEditMode) highlightTableRowById(id);
+        };
+        bar.group.addEventListener('click', bar._clickHandler);
+    });
 }
 
-function attachGanttLabelContextMenu() {
-    // Not implemented for jsGanttImproved
+function attachGanttLabelContextMenu(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group) return;
+        const label = bar.group.querySelector('.bar-label');
+        if (!label) return;
+        if (bar.task) {
+            const color = bar.task.label_color || bar.task.LabelColor;
+            if (color) label.style.fill = color;
+        }
+        if (bar._labelContextMenu) {
+            bar.group.removeEventListener('contextmenu', bar._labelContextMenu);
+        }
+        bar._labelContextMenu = (event) => {
+            event.preventDefault();
+            currentGanttLabel = label;
+            currentGanttTaskId = bar.task && bar.task.id;
+            const rect = label.getBoundingClientRect();
+            ganttLabelColorPicker.style.left = `${rect.left + window.scrollX}px`;
+            ganttLabelColorPicker.style.top = `${rect.top + window.scrollY}px`;
+            const computedColor = label.getAttribute('fill') || getComputedStyle(label).fill;
+            ganttLabelColorPicker.value = rgbToHex(computedColor);
+            selectedGanttLabelColor = ganttLabelColorPicker.value;
+            ganttLabelColorPicker.style.display = 'block';
+            applyGanttLabelColorBtn.style.left = `${rect.left + window.scrollX + ganttLabelColorPicker.offsetWidth}px`;
+            applyGanttLabelColorBtn.style.top = `${rect.top + window.scrollY}px`;
+            applyGanttLabelColorBtn.style.display = 'block';
+            ganttLabelColorPicker.focus();
+        };
+        bar.group.addEventListener('contextmenu', bar._labelContextMenu);
+    });
 }
 
-// Position bar labels to the left of each task bar
-function positionGanttLabelsLeft() {
-    // Not implemented for jsGanttImproved
+function positionGanttLabelsLeft(gantt) {
+    if (!gantt || !gantt.bars) return;
+    gantt.bars.forEach(bar => {
+        if (!bar.group) return;
+        const label = bar.group.querySelector('.bar-label');
+        if (!label) return;
+        const original = bar._originalUpdateLabel || bar.update_label_position;
+        bar._originalUpdateLabel = original;
+        bar.update_label_position = function() {
+            if (original) original.call(this);
+            const lbl = this.group.querySelector('.bar-label');
+            if (!lbl || !this.$bar) return;
+            lbl.setAttribute('text-anchor', 'end');
+            lbl.setAttribute('x', this.$bar.getX() - 5);
+        };
+        bar.update_label_position();
+    });
 }
 
-// Update CSS variables to match the Gantt chart dimensions
-function updateGanttRowHeight() {
-    // Not implemented for jsGanttImproved
+function updateGanttRowHeight(gantt) {
+    if (!gantt || !gantt.options) return;
+    const height = (gantt.options.bar_height || 0) + (gantt.options.padding || 0);
+    document.documentElement.style.setProperty('--gantt-row-height', `${height}px`);
+    const header = gantt.options.header_height || 0;
+    document.documentElement.style.setProperty('--gantt-header-height', `${header}px`);
 }
 
 function createGanttChart(elementId, data, labelKey, startKey, endKey) {
@@ -1412,10 +1561,17 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
     });
 
     const viewMode = selectBestViewMode(tasks);
-    const gantt = initJsGantt(container, tasks, viewMode);
+    const gantt = initFrappeGantt(container, tasks, viewMode);
     if (gantt) {
         gantt.currentTasks = tasks;
         gantt.currentView = viewMode;
+        updateGanttRowHeight(gantt);
+        addBaselineBars(gantt);
+        addMilestoneMarkers(gantt);
+        attachGanttDoubleClick(gantt);
+        attachGanttClick(gantt);
+        attachGanttLabelContextMenu(gantt);
+        positionGanttLabelsLeft(gantt);
     }
     charts[elementId] = gantt;
     const idx = ganttViewModes.indexOf(viewMode);
@@ -1445,10 +1601,17 @@ function zoomGantt(direction) {
     }
     if (chart && chart.currentTasks) {
         const mode = ganttViewModes[currentGanttView];
-        charts.gantt = initJsGantt('ganttChart', chart.currentTasks, mode);
+        charts.gantt = initFrappeGantt('ganttChart', chart.currentTasks, mode);
         if (charts.gantt) {
             charts.gantt.currentTasks = chart.currentTasks;
             charts.gantt.currentView = mode;
+            updateGanttRowHeight(charts.gantt);
+            addBaselineBars(charts.gantt);
+            addMilestoneMarkers(charts.gantt);
+            attachGanttDoubleClick(charts.gantt);
+            attachGanttClick(charts.gantt);
+            attachGanttLabelContextMenu(charts.gantt);
+            positionGanttLabelsLeft(charts.gantt);
         }
     }
     if (ganttViewModeSelect) {
@@ -1466,10 +1629,17 @@ function changeGanttView(mode) {
 
     if (chart && idx !== -1 && chart.currentTasks) {
         currentGanttView = idx;
-        charts.gantt = initJsGantt('ganttChart', chart.currentTasks, mode);
+        charts.gantt = initFrappeGantt('ganttChart', chart.currentTasks, mode);
         if (charts.gantt) {
             charts.gantt.currentTasks = chart.currentTasks;
             charts.gantt.currentView = mode;
+            updateGanttRowHeight(charts.gantt);
+            addBaselineBars(charts.gantt);
+            addMilestoneMarkers(charts.gantt);
+            attachGanttDoubleClick(charts.gantt);
+            attachGanttClick(charts.gantt);
+            attachGanttLabelContextMenu(charts.gantt);
+            positionGanttLabelsLeft(charts.gantt);
         }
     }
 }
@@ -1478,10 +1648,17 @@ function changeGanttModalView(mode) {
     const chart = charts.ganttModal;
     const idx = ganttViewModes.indexOf(mode);
     if (chart && idx !== -1 && chart.currentTasks) {
-        charts.ganttModal = initJsGantt('ganttChartModal', chart.currentTasks, mode);
+        charts.ganttModal = initFrappeGantt('ganttChartModal', chart.currentTasks, mode);
         if (charts.ganttModal) {
             charts.ganttModal.currentTasks = chart.currentTasks;
             charts.ganttModal.currentView = mode;
+            updateGanttRowHeight(charts.ganttModal);
+            addBaselineBars(charts.ganttModal);
+            addMilestoneMarkers(charts.ganttModal);
+            attachGanttDoubleClick(charts.ganttModal);
+            attachGanttClick(charts.ganttModal);
+            attachGanttLabelContextMenu(charts.ganttModal);
+            positionGanttLabelsLeft(charts.ganttModal);
         }
     }
 }
@@ -3684,7 +3861,14 @@ baselineToggle.addEventListener('change', () => {
     baselineVisible = baselineToggle.checked;
     saveBaselineVisibilityState();
     updateBaselineButton();
-        // Baseline display not supported with jsGanttImproved
+    if (charts.gantt) {
+        addBaselineBars(charts.gantt);
+        addMilestoneMarkers(charts.gantt);
+    }
+    if (charts.ganttModal) {
+        addBaselineBars(charts.ganttModal);
+        addMilestoneMarkers(charts.ganttModal);
+    }
 });
 
 if (toggleBaselineBtn) {
@@ -3692,7 +3876,14 @@ if (toggleBaselineBtn) {
         baselineVisible = !baselineVisible;
         saveBaselineVisibilityState();
         updateBaselineButton();
-        // Baseline display not supported with jsGanttImproved
+        if (charts.gantt) {
+            addBaselineBars(charts.gantt);
+            addMilestoneMarkers(charts.gantt);
+        }
+        if (charts.ganttModal) {
+            addBaselineBars(charts.ganttModal);
+            addMilestoneMarkers(charts.ganttModal);
+        }
     });
 }
 
