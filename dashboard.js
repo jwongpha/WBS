@@ -383,6 +383,7 @@ tableTextColorPicker.value = getComputedStyle(document.documentElement).getPrope
 
 // Data store for original full dataset
 window.allTaskData = [];
+window.currentGanttData = [];
 let charts = {};
 let currentTableFontSize = 14;
 let baselineVisible = true;
@@ -693,6 +694,8 @@ function updateGanttEditButtons() {
             '<span class="material-icons">edit</span>' :
             '<span class="material-icons">pan_tool</span>';
     }
+    if (ganttViewModeSelect) ganttViewModeSelect.disabled = !ganttEditMode;
+    if (ganttViewModeModalSelect) ganttViewModeModalSelect.disabled = !ganttEditMode;
 }
 
 function updateTaskListButton() {
@@ -736,8 +739,9 @@ updateGanttRange(window.allTaskData);
 updateKpiCards(combinedData);
 
 // --- 2. Create Gantt Chart ---
-const visibleData = getVisibleTasks(combinedData);
-charts.gantt = createGanttChart('ganttChart', visibleData, 'Task Name', 'Start Date', 'End Date');
+  const visibleData = getVisibleTasks(combinedData);
+  window.currentGanttData = visibleData;
+  charts.gantt = createGanttChart('ganttChart', visibleData, 'Task Name', 'Start Date', 'End Date');
 applyTaskListVisibility();
 
 // --- 3. Populate Task Table ---
@@ -1329,6 +1333,40 @@ function initFrappeGantt(elementId, tasks, viewMode = 'Day') {
     });
 }
 
+function initJsGantt(elementId, tasks) {
+    const container = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
+    if (!container || !window.JSGantt) return null;
+    container.innerHTML = '';
+
+    const gantt = new JSGantt.GanttChart(container, 'day');
+    if (!gantt) return null;
+
+    tasks.forEach(t => {
+        gantt.AddTaskItemObject({
+            pID: t.id,
+            pName: t.name,
+            pStart: formatDateLocal(t.start),
+            pEnd: formatDateLocal(t.end),
+            pClass: 'gtaskblue',
+            pLink: '',
+            pMile: t.is_milestone ? 1 : 0,
+            pRes: t.Owner || '',
+            pComp: Math.round(t.progress),
+            pGroup: 0,
+            pParent: t.parentID || 0,
+            pOpen: 1,
+            pDepend: t.dependencies || '',
+            pCaption: '',
+            pNotes: t.progress_detail || ''
+        });
+    });
+    gantt.Draw();
+    if (typeof gantt.DrawDependencies === 'function') {
+        gantt.DrawDependencies();
+    }
+    return gantt;
+}
+
 // Helper function to get CSS variable
 function getCssVariable(variable) {
     return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
@@ -1604,18 +1642,33 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
         });
     });
 
-    const viewMode = selectBestViewMode(tasks);
-    const gantt = initFrappeGantt(container, tasks, viewMode);
-    if (gantt) {
-        gantt.currentTasks = tasks;
-        gantt.currentView = viewMode;
-        updateGanttRowHeight(gantt);
-        addBaselineBars(gantt);
-        addMilestoneMarkers(gantt);
-        attachGanttDoubleClick(gantt);
-        attachGanttClick(gantt);
-        attachGanttLabelContextMenu(gantt);
-        positionGanttLabelsLeft(gantt);
+    let viewMode = ganttViewModes[currentGanttView] || 'Day';
+    if (!charts[elementId]) {
+        viewMode = selectBestViewMode(tasks);
+        currentGanttView = ganttViewModes.indexOf(viewMode);
+    }
+    let gantt;
+    if (ganttEditMode) {
+        gantt = initFrappeGantt(container, tasks, viewMode);
+        if (gantt) {
+            gantt.currentTasks = tasks;
+            gantt.currentView = viewMode;
+            gantt.isFrappe = true;
+            updateGanttRowHeight(gantt);
+            addBaselineBars(gantt);
+            addMilestoneMarkers(gantt);
+            attachGanttDoubleClick(gantt);
+            attachGanttClick(gantt);
+            attachGanttLabelContextMenu(gantt);
+            positionGanttLabelsLeft(gantt);
+        }
+    } else {
+        gantt = initJsGantt(container, tasks);
+        if (gantt) {
+            gantt.currentTasks = tasks;
+            gantt.currentView = 'Day';
+            gantt.isFrappe = false;
+        }
     }
     charts[elementId] = gantt;
     const idx = ganttViewModes.indexOf(viewMode);
@@ -1624,6 +1677,16 @@ function createGanttChart(elementId, data, labelKey, startKey, endKey) {
         ganttViewModeSelect.value = ganttViewModes[currentGanttView];
     }
     return gantt;
+}
+
+function redrawGanttCharts() {
+    if (!window.currentGanttData || window.currentGanttData.length === 0) return;
+    charts.gantt = createGanttChart('ganttChart', window.currentGanttData, 'Task Name', 'Start Date', 'End Date');
+    applyTaskListVisibility();
+    if (ganttModal.classList.contains('show')) {
+        charts.ganttModal = createGanttChart('ganttChartModal', window.currentGanttData, 'Task Name', 'Start Date', 'End Date');
+        applyTaskListVisibility();
+    }
 }
 
 // --- Zoom and Scrollbar Functions ---
@@ -1637,7 +1700,7 @@ let ganttViewModes = ["Month", "Week", "Day", "Half Day", "Quarter Day"];
 let currentGanttView = ganttViewModes.indexOf('Day');
 function zoomGantt(direction) {
     const chart = charts.gantt;
-    if (!chart) return;
+    if (!chart || !chart.isFrappe) return;
     if(direction === "in" && currentGanttView < ganttViewModes.length - 1) {
         currentGanttView++;
     } else if(direction === "out" && currentGanttView > 0) {
@@ -1671,7 +1734,7 @@ function changeGanttView(mode) {
     const chart = charts.gantt;
     const idx = ganttViewModes.indexOf(mode);
 
-    if (chart && idx !== -1 && chart.currentTasks) {
+    if (chart && chart.isFrappe && idx !== -1 && chart.currentTasks) {
         currentGanttView = idx;
         charts.gantt = initFrappeGantt('ganttChart', chart.currentTasks, mode);
         if (charts.gantt) {
@@ -1691,7 +1754,7 @@ function changeGanttView(mode) {
 function changeGanttModalView(mode) {
     const chart = charts.ganttModal;
     const idx = ganttViewModes.indexOf(mode);
-    if (chart && idx !== -1 && chart.currentTasks) {
+    if (chart && chart.isFrappe && idx !== -1 && chart.currentTasks) {
         charts.ganttModal = initFrappeGantt('ganttChartModal', chart.currentTasks, mode);
         if (charts.ganttModal) {
             charts.ganttModal.currentTasks = chart.currentTasks;
@@ -2785,7 +2848,7 @@ toast.addEventListener('transitionend', () => toast.remove(), { once: true });
 }
 
 function showGanttModal() {
-    const visibleData = getVisibleTasks(window.allTaskData);
+    const visibleData = window.currentGanttData && window.currentGanttData.length ? window.currentGanttData : getVisibleTasks(window.allTaskData);
     ganttModal.style.display = 'flex';
     void ganttModal.offsetWidth;
     charts.ganttModal = createGanttChart('ganttChartModal', visibleData, 'Task Name', 'Start Date', 'End Date');
@@ -4023,12 +4086,14 @@ if (toggleGanttEditBtn) {
     toggleGanttEditBtn.addEventListener('click', () => {
         ganttEditMode = !ganttEditMode;
         updateGanttEditButtons();
+        redrawGanttCharts();
     });
 }
 if (toggleGanttModalEditBtn) {
     toggleGanttModalEditBtn.addEventListener('click', () => {
         ganttEditMode = !ganttEditMode;
         updateGanttEditButtons();
+        redrawGanttCharts();
     });
 }
 if (ganttViewModeSelect) {
