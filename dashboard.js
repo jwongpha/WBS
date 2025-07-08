@@ -684,13 +684,13 @@ function updateGanttEditButtons() {
         toggleGanttEditBtn.title = ganttEditMode ? disableTitle : enableTitle;
         toggleGanttEditBtn.innerHTML = ganttEditMode ?
             '<span class="material-icons">edit</span>' :
-            '<span class="material-icons">pan_tool</span>';
+            '<span class="material-icons">view_timeline</span>';
     }
     if (toggleGanttModalEditBtn) {
         toggleGanttModalEditBtn.title = ganttEditMode ? disableTitle : enableTitle;
         toggleGanttModalEditBtn.innerHTML = ganttEditMode ?
             '<span class="material-icons">edit</span>' :
-            '<span class="material-icons">pan_tool</span>';
+            '<span class="material-icons">view_timeline</span>';
     }
     if (ganttViewModeSelect) ganttViewModeSelect.disabled = !ganttEditMode;
     if (ganttViewModeModalSelect) ganttViewModeModalSelect.disabled = !ganttEditMode;
