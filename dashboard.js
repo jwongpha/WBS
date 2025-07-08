@@ -286,8 +286,22 @@ const toggleBaselineBtn = document.getElementById('toggleBaselineBtn');
 const toggleTaskListBtn = document.getElementById('toggleTaskListBtn');
 const toggleGanttEditBtn = document.getElementById('toggleGanttEditBtn');
 const toggleGanttModalEditBtn = document.getElementById('toggleGanttModalEditBtn');
-await loadBaselineVisibilityState();
-await loadTaskListVisibilityState();
+// Data store for original full dataset
+window.allTaskData = [];
+let charts = {};
+let currentTableFontSize = 14;
+let baselineVisible = true;
+let ganttTaskListVisible = true;
+let ganttEditMode = false;
+let ganttTotalDateRange = { min: null, max: null };
+let editingTaskId = null;
+let toggleColumnsClickHandler = null;
+let columnDropdownDocumentClickHandler = null;
+window.columnVisibility = {}; // Global object to store column visibility state
+window.columnOrder = []; // Global array to store column display order
+window.typeSwitchValues = ['all'];
+
+window.tableSortState = { column: null, ascending: true };
 const kanbanContainer = document.getElementById('kanbanContainer');
 const tableSearchInput = document.getElementById('tableSearchInput');
 const editProjectInfoBtn = document.getElementById('editProjectInfoBtn');
@@ -322,6 +336,7 @@ const tableActionIcons = document.getElementById('tableActionIcons');
 const tableEditIcon = document.getElementById('tableEditIcon');
 const tableDeleteIcon = document.getElementById('tableDeleteIcon');
 const tableCopyIcon = document.getElementById('tableCopyIcon');
+
 
 function updateSelectedActionsVisibility() {
     const selected = taskMatrixTableBody.querySelectorAll('.task-select:checked').length;
@@ -381,23 +396,6 @@ tableTextColorPicker.value = getComputedStyle(document.documentElement).getPrope
   const initialSummary = navigationDrawer.querySelector('details.menu[open] > summary');
   if (initialSummary) updateDrawerStateCursor(initialSummary);
 
-// Data store for original full dataset
-window.allTaskData = [];
-window.currentGanttData = [];
-let charts = {};
-let currentTableFontSize = 14;
-let baselineVisible = true;
-let ganttTaskListVisible = true;
-let ganttEditMode = false;
-let ganttTotalDateRange = { min: null, max: null };
-let editingTaskId = null;
-let toggleColumnsClickHandler = null;
-let columnDropdownDocumentClickHandler = null;
-window.columnVisibility = {}; // Global object to store column visibility state
-window.columnOrder = []; // Global array to store column display order
-window.typeSwitchValues = ['all'];
-
-window.tableSortState = { column: null, ascending: true };
 // Preset order for Kanban status columns
 const KANBAN_STATUS_ORDER = ['Not Started', 'In Progress', 'On Hold', 'At Risk', 'Done', 'Open', 'Resolved'];
 // Map from data field name to display name for headers and checkboxes
@@ -4289,6 +4287,9 @@ console.error("Could not load project data:", e);
 await showCustomAlert("Could not load project data. Please check the data format or browser compatibility.", "Data Load Error");
 }
 }
+
+await loadBaselineVisibilityState();
+await loadTaskListVisibilityState();
 
 await initializeDashboard();
 });
