@@ -283,9 +283,11 @@ const deleteAllBtn = document.getElementById('deleteAllBtn');
 const switchKanbanBtn = document.getElementById('switchKanbanBtn');
 const baselineToggle = document.getElementById('baselineToggle');
 const toggleBaselineBtn = document.getElementById('toggleBaselineBtn');
+const toggleTaskListBtn = document.getElementById('toggleTaskListBtn');
 const toggleGanttEditBtn = document.getElementById('toggleGanttEditBtn');
 const toggleGanttModalEditBtn = document.getElementById('toggleGanttModalEditBtn');
 loadBaselineVisibilityState();
+loadTaskListVisibilityState();
 const kanbanContainer = document.getElementById('kanbanContainer');
 const tableSearchInput = document.getElementById('tableSearchInput');
 const editProjectInfoBtn = document.getElementById('editProjectInfoBtn');
@@ -384,6 +386,7 @@ window.allTaskData = [];
 let charts = {};
 let currentTableFontSize = 14;
 let baselineVisible = true;
+let ganttTaskListVisible = true;
 let ganttEditMode = false;
 let ganttTotalDateRange = { min: null, max: null };
 let editingTaskId = null;
@@ -624,12 +627,35 @@ async function loadBaselineVisibilityState() {
     }
 }
 
+// Load persisted task list visibility flag
+async function loadTaskListVisibilityState() {
+    try {
+        const stored = await get('ganttTaskListVisible');
+        if (typeof stored === 'boolean') {
+            ganttTaskListVisible = stored;
+        }
+    } catch (error) {
+        console.error('Failed to load task list state:', error);
+    }
+    updateTaskListButton();
+    applyTaskListVisibility();
+}
+
 // Persist current baseline visibility flag
 async function saveBaselineVisibilityState() {
     try {
         await set('baselineVisible', baselineVisible);
     } catch (error) {
         console.error('Failed to save baseline state:', error);
+    }
+}
+
+// Persist current task list visibility flag
+async function saveTaskListVisibilityState() {
+    try {
+        await set('ganttTaskListVisible', ganttTaskListVisible);
+    } catch (error) {
+        console.error('Failed to save task list state:', error);
     }
 }
 
@@ -667,6 +693,23 @@ function updateGanttEditButtons() {
             '<span class="material-icons">edit</span>' :
             '<span class="material-icons">pan_tool</span>';
     }
+}
+
+function updateTaskListButton() {
+    if (!toggleTaskListBtn) return;
+    if (ganttTaskListVisible) {
+        toggleTaskListBtn.title = 'Hide Task List';
+        toggleTaskListBtn.innerHTML = '<span class="material-icons">view_sidebar</span>';
+    } else {
+        toggleTaskListBtn.title = 'Show Task List';
+        toggleTaskListBtn.innerHTML = '<span class="material-icons">view_stream</span>';
+    }
+}
+
+function applyTaskListVisibility() {
+    ganttContainers.forEach(c => {
+        c.classList.toggle('hide-task-list', !ganttTaskListVisible);
+    });
 }
 
 // --- Core Functions ---
@@ -3693,6 +3736,15 @@ if (toggleBaselineBtn) {
         saveBaselineVisibilityState();
         updateBaselineButton();
         // Baseline display not supported with jsGanttImproved
+    });
+}
+
+if (toggleTaskListBtn) {
+    toggleTaskListBtn.addEventListener('click', () => {
+        ganttTaskListVisible = !ganttTaskListVisible;
+        saveTaskListVisibilityState();
+        updateTaskListButton();
+        applyTaskListVisibility();
     });
 }
 
