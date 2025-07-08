@@ -1339,7 +1339,7 @@ function initJsGantt(elementId, tasks) {
     const gantt = new JSGantt.GanttChart(container, 'day');
     if (!gantt) return null;
     gantt.setOptions({
-        vCaptionType: 'Complete'
+        vCaptionType: 'Caption'
     });
 
     tasks.forEach(t => {
@@ -1357,7 +1357,7 @@ function initJsGantt(elementId, tasks) {
             pParent: t.parentID || 0,
             pOpen: 1,
             pDepend: t.dependencies || '',
-            pCaption: '',
+            pCaption: t.name,
             pNotes: t.progress_detail || ''
         });
     });
