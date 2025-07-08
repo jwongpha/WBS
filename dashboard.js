@@ -1,7 +1,7 @@
 // Default data for first-time use
 const defaultCsvData = ``; // Made defaultCsvData empty
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 const { get, set, del } = idbKeyval; // Destructure 'del' from idbKeyval
 
   // ----------------- Accessibility Enhancements -----------------
@@ -286,8 +286,8 @@ const toggleBaselineBtn = document.getElementById('toggleBaselineBtn');
 const toggleTaskListBtn = document.getElementById('toggleTaskListBtn');
 const toggleGanttEditBtn = document.getElementById('toggleGanttEditBtn');
 const toggleGanttModalEditBtn = document.getElementById('toggleGanttModalEditBtn');
-loadBaselineVisibilityState();
-loadTaskListVisibilityState();
+await loadBaselineVisibilityState();
+await loadTaskListVisibilityState();
 const kanbanContainer = document.getElementById('kanbanContainer');
 const tableSearchInput = document.getElementById('tableSearchInput');
 const editProjectInfoBtn = document.getElementById('editProjectInfoBtn');
@@ -738,6 +738,7 @@ updateKpiCards(combinedData);
 // --- 2. Create Gantt Chart ---
 const visibleData = getVisibleTasks(combinedData);
 charts.gantt = createGanttChart('ganttChart', visibleData, 'Task Name', 'Start Date', 'End Date');
+applyTaskListVisibility();
 
 // --- 3. Populate Task Table ---
 populateTaskMatrix(combinedData);
@@ -2788,6 +2789,7 @@ function showGanttModal() {
     ganttModal.style.display = 'flex';
     void ganttModal.offsetWidth;
     charts.ganttModal = createGanttChart('ganttChartModal', visibleData, 'Task Name', 'Start Date', 'End Date');
+    applyTaskListVisibility();
     if (charts.ganttModal) {
         charts.ganttModal.currentTasks = charts.ganttModal.currentTasks || visibleData;
         charts.ganttModal.currentView = ganttViewModes[currentGanttView];
@@ -4223,5 +4225,5 @@ await showCustomAlert("Could not load project data. Please check the data format
 }
 }
 
-initializeDashboard();
+await initializeDashboard();
 });
