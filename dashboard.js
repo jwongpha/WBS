@@ -2476,21 +2476,34 @@ const vehicles = uniqueRawData.filter(r => r['Record Type'] === 'Vehicle');
 // Create a map from ALL unique raw data for parent lookup, not just tasks.
 const rawDataMap = new Map(uniqueRawData.map(t => [t.TaskID, t]));
 
+  const levelCache = new Map();
+  function computeLevel(row) {
+    if (!row) return 1;
+    if (levelCache.has(row.TaskID)) return levelCache.get(row.TaskID);
+    if (!row.ParentID) {
+      levelCache.set(row.TaskID, 1);
+      return 1;
+    }
+    const parentRow = rawDataMap.get(row.ParentID);
+    const level = computeLevel(parentRow) + 1;
+    levelCache.set(row.TaskID, level);
+    return level;
+  }
+
 const processedTasks = tasks.map(t => {
   const progressDetail = t.DETAILS ?? t['Progress Detail'];
   const { DETAILS, ...rest } = t;
   return {
     ...rest,
     'Progress Detail': progressDetail,
+    Level: computeLevel(t),
     Type: 'Task',
     _isCollapsed: false
   };
 });
 
 const processedIssues = issues.map(issue => {
-// Use rawDataMap for parent lookup to ensure parent is found regardless of its Type
-const parentItem = rawDataMap.get(issue.ParentID);
-const parentLevel = parentItem ? parseInt(parentItem.Level || 1) : 1;
+const level = computeLevel(issue);
 let progress = 10;
 if (issue['Status'] === 'Resolved') progress = 100;
 if (issue['Status'] === 'In Progress') progress = 50;
@@ -2502,7 +2515,7 @@ if (issue['Status'] === 'In Progress') progress = 50;
     ...rest,
     'Progress Detail': progressDetail,
     // 'Task Name': `[Issue] ${issue['Task Name']}`, // Removed prefix
-    'Level': parentLevel + 1,
+    'Level': level,
     'Baseline Start Date': issue['Start Date'],
     'Baseline End Date': issue['End Date'],
     'Progress (%)': progress,
@@ -2513,8 +2526,8 @@ if (issue['Status'] === 'In Progress') progress = 50;
 
 const processedVehicles = vehicles.map(vehicle => {
 // Use rawDataMap for parent lookup
-const parentItem = rawDataMap.get(vehicle.ParentID); // ParentID for vehicles might be empty in default data
-const parentLevel = parentItem ? parseInt(parentItem.Level || 1) : 0; // Default to 0 for top-level vehicles if no parent
+const parentItem = rawDataMap.get(vehicle.ParentID);
+const level = computeLevel(vehicle);
 
 // Preserve TaskID if provided, otherwise generate from name
 const taskId = (vehicle.TaskID && vehicle.TaskID.trim()) ? vehicle.TaskID.trim() : `V-${vehicle['Task Name'].replace(/ /g, '-')}`;
@@ -2531,8 +2544,8 @@ return {
 ...rest,
 'TaskID': taskId,
 // 'Task Name': `[Milestone] ${vehicle['Task Name']} - ${vehicle.Phase}`, // Removed prefix
-'ParentID': vehicle.ParentID, // Keep original ParentID from CSV
-'Level': parentLevel + 1,
+  'ParentID': vehicle.ParentID, // Keep original ParentID from CSV
+  'Level': level,
 'Owner': parentItem ? parentItem.Owner : 'N/A', // Inherit owner from parent if exists
 'Start Date': vehicle['End Date'],
 //    'End Date': vehicle['End Date'], // Ensure End Date is carried over
