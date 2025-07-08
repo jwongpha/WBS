@@ -1338,6 +1338,9 @@ function initJsGantt(elementId, tasks) {
 
     const gantt = new JSGantt.GanttChart(container, 'day');
     if (!gantt) return null;
+    gantt.setOptions({
+        vCaptionType: 'Complete'
+    });
 
     tasks.forEach(t => {
         gantt.AddTaskItemObject({
