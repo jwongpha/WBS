@@ -259,14 +259,11 @@ span.gfoldercollapse {
   font-size: 9px;
   text-align: left;
   white-space: nowrap;
-  top: 1px;
   position: absolute;
   top: 2px;
-}
-
-.ggroupcaption,
-.gcaption {
-  right: -126px;
+  left: 4px;
+  right: auto;
+  color: #fff;
 }
 
 /* Task complete %age bar shared attributes */
